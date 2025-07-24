@@ -11,7 +11,7 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollAreaViewport } from "@/components/ui/scroll-area";
 import { Loader2, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
@@ -55,23 +55,25 @@ export function ChatPanel({
         <CardDescription>Ask questions about the provided context.</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full" viewportRef={scrollAreaViewportRef}>
-          <div className="space-y-6 pr-4">
-            {messages.length === 0 ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-center text-muted-foreground">
-                  {knowledge
-                    ? "Ask a question to get started."
-                    : "First, provide a document and extract knowledge."}
-                </p>
-              </div>
-            ) : (
-              messages.map((msg, index) => (
-                <ChatMessage key={index} message={msg} />
-              ))
-            )}
-            {isResponding && <TypingIndicator />}
-          </div>
+        <ScrollArea className="h-full">
+          <ScrollAreaViewport ref={scrollAreaViewportRef} className="h-full">
+            <div className="space-y-6 pr-4">
+              {messages.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-center text-muted-foreground">
+                    {knowledge
+                      ? "Ask a question to get started."
+                      : "First, provide a document and extract knowledge."}
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg, index) => (
+                  <ChatMessage key={index} message={msg} />
+                ))
+              )}
+              {isResponding && <TypingIndicator />}
+            </div>
+          </ScrollAreaViewport>
         </ScrollArea>
       </CardContent>
       <CardFooter className="pt-4">
