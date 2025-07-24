@@ -6,16 +6,32 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Button } from "@/components/ui/button";
 import { Check, Copy } from "lucide-react";
 
-export function CodeBlock(props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLPreElement>, HTMLPreElement>) {
+// This is a more robust way to handle the props from react-markdown.
+// It ensures that we can extract the code string and language correctly.
+interface CodeBlockProps {
+  node?: any;
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function CodeBlock({ node, inline, className, children, ...props }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
-  const code = props.children?.toString() || '';
-  const language = props.className?.replace(/language-/, '') || 'text';
+  
+  const match = /language-(\w+)/.exec(className || '');
+  const language = match ? match[1] : 'text';
+  const code = String(children).replace(/\n$/, '');
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  
+  // For inline code, we don't want the full block treatment.
+  if (inline) {
+    return <code className="rounded bg-muted px-1 py-0.5 font-mono text-sm" {...props}>{children}</code>;
+  }
 
   return (
     <div className="relative my-4 rounded-lg bg-[#1e1e1e]">

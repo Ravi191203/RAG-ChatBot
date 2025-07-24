@@ -159,8 +159,7 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
                    <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      pre: ({ node, ...props }) => <CodeBlock {...props} />,
-                      code: ({ node, ...props }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-sm" {...props} />,
+                      code: CodeBlock,
                     }}
                   >
                     {knowledge}
