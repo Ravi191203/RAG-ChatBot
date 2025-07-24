@@ -35,7 +35,7 @@ const primaryPrompt = ai.definePrompt({
 First, analyze the provided context to see if it contains the answer to the user's question.
 
 - If the context has a relevant answer, use it to form a comprehensive response.
-- If the context does not contain the answer, use your own knowledge to respond, but make it clear that the information is not from the provided document.
+- If the context does not contain the answer, use your own knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
 - If you are unsure or the question is ambiguous, ask for clarification.
 
 Always strive to be helpful and provide a well-reasoned answer.
@@ -61,19 +61,19 @@ const fallbackPrompt = ai.definePrompt({
     output: {schema: IntelligentResponseOutputSchema},
     prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers.
   
-  First, analyze the provided context to see if it contains the answer to the user's question.
+First, analyze the provided context to see if it contains the answer to the user's question.
   
-  - If the context has a relevant answer, use it to form a comprehensive response.
-  - If the context does not contain the answer, use your own knowledge to respond, but make it clear that the information is not from the provided document.
-  - If you are unsure or the question is ambiguous, ask for clarification.
+- If the context has a relevant answer, use it to form a comprehensive response.
+- If the context does not contain the answer, use your own knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- If you are unsure or the question is ambiguous, ask for clarification.
   
-  Always strive to be helpful and provide a well-reasoned answer.
+Always strive to be helpful and provide a well-reasoned answer.
   
-  Context:
-  {{{context}}}
+Context:
+{{{context}}}
   
-  Question:
-  {{{question}}}`,
+Question:
+{{{question}}}`,
     model: 'googleai/gemini-pro',
     retry: {
       backoff: {
