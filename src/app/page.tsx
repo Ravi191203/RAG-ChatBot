@@ -182,6 +182,11 @@ export default function Home() {
             />
         </div>
       </main>
+      <footer className="py-4 px-4 sm:px-6 md:px-8">
+        <p className="text-center text-xs text-muted-foreground">
+          Created with Google (Firebase Studio and Gemini)
+        </p>
+      </footer>
     </div>
   );
 }
