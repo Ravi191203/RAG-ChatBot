@@ -1,6 +1,6 @@
 # Contextual Companion: Your AI-Powered RAG Chatbot
 
-![Contextual Companion Screenshot](https://placehold.co/800x400.png?text=App+Screenshot)
+![Contextual Companion Screenshot](https://github.com/Ravi191203/RAG-ChatBot/blob/2eeb51cf8287adc783da396bb7c5266a5eba26bf/Screenshot%202025-07-24%20223415.png)
 
 **Contextual Companion** is an intelligent, full-stack web application that leverages Retrieval-Augmented Generation (RAG) to answer questions about any document you provide. Simply upload a file or paste text, and our AI-powered assistant will extract the key knowledge and engage in a contextual conversation with you.
 
