@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 type Props = {
   onExtract: (content: string) => Promise<void>;
@@ -56,9 +57,9 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
           <h3 className="text-sm font-medium text-muted-foreground">Extracted Knowledge</h3>
           <div className="flex-1 rounded-md border bg-muted/50">
             <ScrollArea className="h-full">
-              <p className="whitespace-pre-wrap p-4 text-sm">
-                {knowledge ? knowledge : "No knowledge extracted yet."}
-              </p>
+              <div className="prose prose-sm dark:prose-invert p-4">
+                {knowledge ? <ReactMarkdown>{knowledge}</ReactMarkdown> : <p>No knowledge extracted yet.</p>}
+              </div>
             </ScrollArea>
           </div>
         </div>
