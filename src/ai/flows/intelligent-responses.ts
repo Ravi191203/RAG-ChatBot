@@ -30,13 +30,17 @@ const prompt = ai.definePrompt({
   name: 'intelligentResponsePrompt',
   input: {schema: IntelligentResponseInputSchema},
   output: {schema: IntelligentResponseOutputSchema},
-  prompt: `You are a chatbot that answers questions based on the context provided. You should only use the context provided to answer the question. If the context does not contain the answer to the question, you should respond with I don't know.
+  prompt: `You are a helpful AI assistant. Your goal is to answer the user's question based on the provided context.
 
-Context: {{{context}}}
+If the answer is available in the context, you should use it to form a comprehensive response.
 
-Question: {{{question}}}
+If the answer is not in the context, you should say that you cannot find the answer in the provided document and ask if the user would like you to answer based on your general knowledge.
 
-Answer:`,
+Context:
+{{{context}}}
+
+Question:
+{{{question}}}`,
   retry: {
     backoff: {
       delay: 1000,
