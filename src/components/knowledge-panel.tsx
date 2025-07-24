@@ -108,13 +108,16 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
           <TabsContent value="text" className="flex flex-1 flex-col gap-4 overflow-hidden">
             <Textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                setFileName(""); 
+              }}
               placeholder="Paste your document content here..."
               className="flex-1"
               disabled={isExtracting}
             />
           </TabsContent>
-          <TabsContent value="file" className="flex flex-1 flex-col gap-4 overflow-hidden">
+          <TabsContent value="file" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
             <div 
               onDrop={onDrop}
               onDragOver={onDragOver}
