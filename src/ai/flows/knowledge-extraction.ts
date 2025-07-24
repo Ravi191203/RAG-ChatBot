@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   output: {schema: ExtractKnowledgeOutputSchema},
   prompt: `You are an expert at extracting key information from documents and web pages.
 
-  Please extract the key information from the following content:
+  Please extract the key information from the following content. If you cannot extract key points, provide a summary of the content. If the content is empty or nonsensical, say so.
 
   Content: {{{content}}}
 
