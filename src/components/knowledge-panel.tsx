@@ -15,6 +15,9 @@ import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import remarkGfm from "remark-gfm";
+import { CodeBlock } from "./code-block";
+
 
 type Props = {
   onExtract: (content: string) => Promise<void>;
@@ -152,7 +155,19 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
           <div className="flex-1 rounded-md border bg-muted/50">
             <ScrollArea className="h-full">
               <div className="prose prose-sm dark:prose-invert max-w-none p-4 prose-p:my-0 prose-headings:my-0">
-                {knowledge ? <ReactMarkdown>{knowledge}</ReactMarkdown> : <p className="text-muted-foreground">No knowledge extracted yet.</p>}
+                {knowledge ? (
+                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      pre: ({ node, ...props }) => <CodeBlock {...props} />,
+                      code: ({ node, ...props }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-sm" {...props} />,
+                    }}
+                  >
+                    {knowledge}
+                  </ReactMarkdown>
+                ) : (
+                  <p className="text-muted-foreground">No knowledge extracted yet.</p>
+                )}
               </div>
             </ScrollArea>
           </div>

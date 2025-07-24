@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Bot, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { CodeBlock } from "./code-block";
 
 type Props = {
   message: ChatMessageType;
@@ -36,7 +38,15 @@ export function ChatMessage({ message }: Props) {
         )}
       >
         <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-0 prose-headings:my-0">
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              pre: ({ node, ...props }) => <CodeBlock {...props} />,
+              code: ({ node, ...props }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-sm" {...props} />,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
         </div>
       </div>
       {isUser && (
