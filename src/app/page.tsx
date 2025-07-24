@@ -5,8 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import { KnowledgePanel } from "@/components/knowledge-panel";
 import { ChatPanel } from "@/components/chat-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
-import { Bot } from 'lucide-react';
+import { Bot, MessageSquare, BookText, ArrowLeft } from 'lucide-react';
 import type { ChatMessage as ApiChatMessage } from './api/chat/route';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -33,6 +36,7 @@ export default function Home() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<"knowledge" | "chat">("knowledge");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -78,6 +82,9 @@ export default function Home() {
         title: "Success",
         description: "Knowledge extracted successfully.",
       });
+      if (window.innerWidth < 768) { // md breakpoint
+        setActivePanel("chat");
+      }
     } catch (error) {
       console.error(error);
       toast({
@@ -144,19 +151,36 @@ export default function Home() {
             <Bot className="h-7 w-7 text-primary" />
             <h1 className="text-xl font-bold font-headline">Contextual Companion</h1>
         </div>
+         <div className="md:hidden">
+          {activePanel === 'knowledge' ? (
+            <Button variant="outline" size="sm" onClick={() => setActivePanel('chat')} disabled={!knowledge}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Chat
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setActivePanel('knowledge')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          )}
+        </div>
       </header>
       <main className="flex-1 p-4 sm:p-6 md:p-8 grid md:grid-cols-2 gap-8">
-        <KnowledgePanel
-          onExtract={handleExtractKnowledge}
-          knowledge={knowledge}
-          isExtracting={isExtracting}
-        />
-        <ChatPanel
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          isResponding={isResponding}
-          knowledge={knowledge}
-        />
+        <div className={cn("md:block", activePanel !== 'knowledge' && 'hidden')}>
+            <KnowledgePanel
+              onExtract={handleExtractKnowledge}
+              knowledge={knowledge}
+              isExtracting={isExtracting}
+            />
+        </div>
+        <div className={cn("md:block", activePanel !== 'chat' && 'hidden')}>
+            <ChatPanel
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              isResponding={isResponding}
+              knowledge={knowledge}
+            />
+        </div>
       </main>
     </div>
   );

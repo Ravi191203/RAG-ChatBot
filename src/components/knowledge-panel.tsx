@@ -138,7 +138,7 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
               />
             </div>
           </TabsContent>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="pt-4">
             <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
               {isExtracting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -151,7 +151,7 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
           <h3 className="text-sm font-medium text-muted-foreground">Extracted Knowledge</h3>
           <div className="flex-1 rounded-md border bg-muted/50">
             <ScrollArea className="h-full">
-              <div className="prose prose-sm dark:prose-invert max-w-none p-4">
+              <div className="prose prose-sm dark:prose-invert max-w-none p-4 prose-p:my-0 prose-headings:my-0">
                 {knowledge ? <ReactMarkdown>{knowledge}</ReactMarkdown> : <p className="text-muted-foreground">No knowledge extracted yet.</p>}
               </div>
             </ScrollArea>
