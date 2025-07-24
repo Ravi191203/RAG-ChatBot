@@ -31,14 +31,16 @@ const primaryPrompt = ai.definePrompt({
   name: 'extractKnowledgePrimaryPrompt',
   input: {schema: ExtractKnowledgeInputSchema},
   output: {schema: ExtractKnowledgeOutputSchema},
-  prompt: `You are an expert at extracting key information from documents and web pages.
+  prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
 
-  Please extract the key information from the following content. If you cannot extract key points, provide a summary of the content. If the content is empty or nonsensical, say so.
+Instead of just listing key points, I want you to truly understand the text and present your understanding. Your output should be a detailed, well-structured summary that captures the core concepts, key arguments, and any important data or examples. Explain the main ideas in your own words, as if you were creating a study guide for someone who needs to master this information.
 
-  Content: {{{content}}}
+If the content is empty, nonsensical, or too brief to analyze, please state that clearly.
 
-  Please focus on extracting information that would be useful for answering questions about the content.
-  `,
+Content:
+{{{content}}}
+
+Your Extracted Knowledge:`,
   model: 'googleai/gemini-1.5-flash-latest',
   retry: {
     backoff: {
@@ -53,14 +55,16 @@ const fallbackPrompt = ai.definePrompt({
     name: 'extractKnowledgeFallbackPrompt',
     input: {schema: ExtractKnowledgeInputSchema},
     output: {schema: ExtractKnowledgeOutputSchema},
-    prompt: `You are an expert at extracting key information from documents and web pages.
-  
-    Please extract the key information from the following content. If you cannot extract key points, provide a summary of the content. If the content is empty or nonsensical, say so.
-  
-    Content: {{{content}}}
-  
-    Please focus on extracting information that would be useful for answering questions about the content.
-    `,
+    prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
+
+Instead of just listing key points, I want you to truly understand the text and present your understanding. Your output should be a detailed, well-structured summary that captures the core concepts, key arguments, and any important data or examples. Explain the main ideas in your own words, as if you were creating a study guide for someone who needs to master this information.
+
+If the content is empty, nonsensical, or too brief to analyze, please state that clearly.
+
+Content:
+{{{content}}}
+
+Your Extracted Knowledge:`,
     model: 'googleai/gemini-pro',
     retry: {
       backoff: {
