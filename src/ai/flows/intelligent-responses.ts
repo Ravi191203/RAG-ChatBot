@@ -40,7 +40,7 @@ Answer:`,
   retry: {
     backoff: {
       delay: 1000,
-      maxRetries: 3,
+      maxRetries: 5,
       multiplier: 2,
     },
   },
