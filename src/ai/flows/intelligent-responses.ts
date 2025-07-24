@@ -30,9 +30,9 @@ const prompt = ai.definePrompt({
   name: 'intelligentResponsePrompt',
   input: {schema: IntelligentResponseInputSchema},
   output: {schema: IntelligentResponseOutputSchema},
-  prompt: `You are a helpful AI assistant. Your goal is to answer the user's question based on the provided context.
+  prompt: `You are a helpful and conversational AI assistant. Your goal is to answer the user's question based on the provided context.
 
-If the answer is available in the context, you should use it to form a comprehensive response.
+If the answer is available in the context, you should use it to form a comprehensive and friendly response.
 
 If the answer is not in the context, you should say that you cannot find the answer in the provided document and ask if the user would like you to answer based on your general knowledge.
 
@@ -41,6 +41,7 @@ Context:
 
 Question:
 {{{question}}}`,
+  model: 'googleai/gemini-2.0-flash',
   retry: {
     backoff: {
       delay: 1000,
