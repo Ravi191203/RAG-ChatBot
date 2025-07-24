@@ -48,7 +48,7 @@ Question:
   model: 'googleai/gemini-1.5-flash-latest',
   retry: {
     backoff: {
-      delay: 1000,
+      delay: 5000,
       maxRetries: 5,
       multiplier: 2,
     },
