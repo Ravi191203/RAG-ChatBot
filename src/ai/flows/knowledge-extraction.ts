@@ -27,8 +27,8 @@ export async function extractKnowledge(input: ExtractKnowledgeInput): Promise<Ex
   return extractKnowledgeFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'extractKnowledgePrompt',
+const primaryPrompt = ai.definePrompt({
+  name: 'extractKnowledgePrimaryPrompt',
   input: {schema: ExtractKnowledgeInputSchema},
   output: {schema: ExtractKnowledgeOutputSchema},
   prompt: `You are an expert at extracting key information from documents and web pages.
@@ -39,14 +39,37 @@ const prompt = ai.definePrompt({
 
   Please focus on extracting information that would be useful for answering questions about the content.
   `,
+  model: 'googleai/gemini-1.5-flash-latest',
   retry: {
     backoff: {
-      delay: 1000,
+      delay: 5000,
       maxRetries: 5,
       multiplier: 2,
     },
   },
 });
+
+const fallbackPrompt = ai.definePrompt({
+    name: 'extractKnowledgeFallbackPrompt',
+    input: {schema: ExtractKnowledgeInputSchema},
+    output: {schema: ExtractKnowledgeOutputSchema},
+    prompt: `You are an expert at extracting key information from documents and web pages.
+  
+    Please extract the key information from the following content. If you cannot extract key points, provide a summary of the content. If the content is empty or nonsensical, say so.
+  
+    Content: {{{content}}}
+  
+    Please focus on extracting information that would be useful for answering questions about the content.
+    `,
+    model: 'googleai/gemini-pro',
+    retry: {
+      backoff: {
+        delay: 5000,
+        maxRetries: 5,
+        multiplier: 2,
+      },
+    },
+  });
 
 const extractKnowledgeFlow = ai.defineFlow(
   {
@@ -55,7 +78,13 @@ const extractKnowledgeFlow = ai.defineFlow(
     outputSchema: ExtractKnowledgeOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+        const {output} = await primaryPrompt(input);
+        return output!;
+    } catch (error) {
+        console.warn('Primary model failed, switching to fallback.', error);
+        const {output} = await fallbackPrompt(input);
+        return output!;
+    }
   }
 );
