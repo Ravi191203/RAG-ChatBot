@@ -1,24 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { KnowledgePanel } from "@/components/knowledge-panel";
 import { ChatPanel } from "@/components/chat-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
-import { intelligentResponse } from "@/ai/flows/intelligent-responses";
 import { Bot } from 'lucide-react';
+import type { ChatMessage as ApiChatMessage } from './api/chat/route';
 
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
+// Generate a simple session ID
+const getSessionId = () => {
+  if (typeof window !== 'undefined') {
+    let sessionId = sessionStorage.getItem("chatSessionId");
+    if (!sessionId) {
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      sessionStorage.setItem("chatSessionId", sessionId);
+    }
+    return sessionId;
+  }
+  return null;
+}
+
+
 export default function Home() {
   const [knowledge, setKnowledge] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const id = getSessionId();
+    setSessionId(id);
+  }, []);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (sessionId) {
+        try {
+          const response = await fetch(`/api/chat?sessionId=${sessionId}`);
+          if (response.ok) {
+            const history: ApiChatMessage[] = await response.json();
+            setMessages(history.map(h => ({ role: h.role, content: h.content })));
+          }
+        } catch (error) {
+          console.error("Failed to fetch chat history:", error);
+        }
+      }
+    };
+    fetchHistory();
+  }, [sessionId]);
+
 
   const handleExtractKnowledge = async (content: string) => {
     if (!content) {
@@ -53,12 +91,33 @@ export default function Home() {
   };
 
   const handleSendMessage = async (question: string) => {
+    if (!sessionId) {
+      toast({
+        title: "Error",
+        description: "Session not initialized.",
+        variant: "destructive",
+      });
+      return;
+    }
     const userMessage: ChatMessage = { role: "user", content: question };
     setMessages((prev) => [...prev, userMessage]);
     setIsResponding(true);
 
     try {
-      const result = await intelligentResponse({ question, context: knowledge });
+       const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question, knowledge, sessionId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+
+      const result = await response.json();
+
       const assistantMessage: ChatMessage = { role: "assistant", content: result.answer };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
