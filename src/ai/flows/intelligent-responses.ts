@@ -37,6 +37,13 @@ Context: {{{context}}}
 Question: {{{question}}}
 
 Answer:`,
+  retry: {
+    backoff: {
+      delay: 1000,
+      maxRetries: 3,
+      multiplier: 2,
+    },
+  },
 });
 
 const intelligentResponseFlow = ai.defineFlow(

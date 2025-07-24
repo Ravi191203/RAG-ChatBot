@@ -39,6 +39,13 @@ const prompt = ai.definePrompt({
 
   Please focus on extracting information that would be useful for answering questions about the content.
   `,
+  retry: {
+    backoff: {
+      delay: 1000,
+      maxRetries: 3,
+      multiplier: 2,
+    },
+  },
 });
 
 const extractKnowledgeFlow = ai.defineFlow(
