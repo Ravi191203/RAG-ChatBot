@@ -57,8 +57,8 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
           <h3 className="text-sm font-medium text-muted-foreground">Extracted Knowledge</h3>
           <div className="flex-1 rounded-md border bg-muted/50">
             <ScrollArea className="h-full">
-              <div className="prose prose-sm dark:prose-invert p-4">
-                {knowledge ? <ReactMarkdown>{knowledge}</ReactMarkdown> : <p>No knowledge extracted yet.</p>}
+              <div className="prose prose-sm dark:prose-invert max-w-none p-4">
+                {knowledge ? <ReactMarkdown>{knowledge}</ReactMarkdown> : <p className="text-muted-foreground">No knowledge extracted yet.</p>}
               </div>
             </ScrollArea>
           </div>
