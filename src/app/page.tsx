@@ -7,7 +7,6 @@ import { KnowledgePanel } from "@/components/knowledge-panel";
 import { ChatPanel } from "@/components/chat-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
 import { Bot, MessageSquare, BookText, ArrowLeft } from 'lucide-react';
-import type { ChatMessage as ApiChatMessage } from './api/chat/route';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -44,27 +43,6 @@ export default function Home() {
     const id = getSessionId();
     setSessionId(id);
   }, []);
-
-  useEffect(() => {
-    const fetchHistory = async () => {
-      if (sessionId) {
-        try {
-          const response = await fetch(`/api/chat?sessionId=${sessionId}`);
-          if (response.ok) {
-            const history: ApiChatMessage[] = await response.json();
-            // Only update messages if history is not empty
-            if (history.length > 0) {
-              setMessages(history.map(h => ({ role: h.role, content: h.content })));
-            }
-          }
-        } catch (error) {
-          console.error("Failed to fetch chat history:", error);
-        }
-      }
-    };
-    fetchHistory();
-  }, [sessionId]);
-
 
   const handleExtractKnowledge = async (content: string) => {
     if (!content) {

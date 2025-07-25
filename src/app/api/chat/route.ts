@@ -1,53 +1,13 @@
 
 import {NextRequest, NextResponse} from 'next/server';
 import {intelligentResponse} from '@/ai/flows/intelligent-responses';
-import clientPromise from '@/lib/mongodb';
-import {ObjectId} from 'mongodb';
 
 export type ChatMessage = {
-  _id?: string | ObjectId;
   sessionId: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 };
-
-const dbEnabled = !!process.env.MONGODB_URI;
-
-async function getChatHistory(
-  sessionId: string,
-  limit = 20
-): Promise<ChatMessage[]> {
-  if (!dbEnabled) return [];
-  try {
-    const client = await clientPromise;
-    const db = client.db();
-    const history = await db
-      .collection<ChatMessage>('chat_history')
-      .find({sessionId})
-      .sort({timestamp: -1})
-      .limit(limit)
-      .toArray();
-    return history.reverse();
-  } catch (error) {
-    console.warn("Could not fetch chat history, proceeding without it.", error);
-    return [];
-  }
-}
-
-async function saveChatMessage(message: Omit<ChatMessage, 'timestamp' | '_id'>) {
-    if (!dbEnabled) return;
-    try {
-        const client = await clientPromise;
-        const db = client.db();
-        const timestamp = new Date();
-        await db
-        .collection<ChatMessage>('chat_history')
-        .insertOne({...message, timestamp});
-    } catch (error) {
-        console.warn("Could not save chat message.", error);
-    }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,20 +20,8 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Save the user's message first to maintain order
-    await saveChatMessage({
-      sessionId,
-      role: 'user',
-      content: question,
-    });
-    
-    let history: ChatMessage[] = [];
-    if (dbEnabled) {
-      history = await getChatHistory(sessionId);
-    } else {
-      // If DB is not enabled, construct history from client-side history + new question
-      history = [...(clientHistory || []), { role: 'user', content: question, sessionId, timestamp: new Date() }];
-    }
+    // Construct history from client-side history + new question
+    const history: Omit<ChatMessage, 'timestamp'>[] = [...(clientHistory || []), { role: 'user', content: question, sessionId }];
     
     const contextWithHistory =
       (knowledge || '') +
@@ -86,11 +34,6 @@ export async function POST(req: NextRequest) {
       context: contextWithHistory,
     });
 
-    await saveChatMessage({
-      sessionId,
-      role: 'assistant',
-      content: result.answer,
-    });
 
     return NextResponse.json({answer: result.answer});
   } catch (error: any) {
@@ -103,28 +46,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const {searchParams} = new URL(req.url);
-  const sessionId = searchParams.get('sessionId');
-
-  if (!sessionId) {
-    return NextResponse.json(
-      {error: 'Session ID is required'},
-      {status: 400}
-    );
-  }
-
-  if (!dbEnabled) {
+    // This endpoint is no longer used for fetching history.
+    // Returning an empty array for compatibility.
     return NextResponse.json([]);
-  }
-
-  try {
-    const history = await getChatHistory(sessionId);
-    return NextResponse.json(history);
-  } catch (error: any) {
-    console.error('Error fetching chat history:', error);
-    return NextResponse.json(
-      {error: 'Internal Server Error', details: error.message},
-      {status: 500}
-    );
-  }
 }

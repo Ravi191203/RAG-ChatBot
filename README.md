@@ -11,7 +11,7 @@ This project was built to demonstrate the power of combining modern web technolo
 - **Dynamic Knowledge Base:** Upload `.txt` or `.md` files, or paste raw text to create a contextual knowledge base on the fly.
 - **Intelligent Knowledge Extraction:** An AI agent analyzes the provided content and synthesizes a comprehensive summary.
 - **Conversational Chat Interface:** Ask questions in natural language and receive context-aware answers based on the document.
-- **Chat History:** Conversations are saved and associated with a session, allowing you to pick up where you left off.
+- **Session-Based Chat History:** Conversations are maintained during a browser session.
 - **Responsive Design:** A clean, modern UI that works seamlessly across desktop and mobile devices.
 - **Dark & Light Modes:** Switch between themes for your viewing comfort.
 - **Code-Friendly:** Displays code snippets with syntax highlighting and a one-click copy button.
@@ -24,7 +24,6 @@ This project was built to demonstrate the power of combining modern web technolo
 - **UI:** [React](https://react.dev/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Component Library:** [ShadCN UI](https://ui.shadcn.com/)
-- **Database:** [MongoDB](https://www.mongodb.com/) (for storing chat history)
 - **Deployment:** Ready for [Firebase App Hosting](https://firebase.google.com/docs/hosting)
 
 ## 🛠️ Getting Started
@@ -35,7 +34,6 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 - [Node.js](https://nodejs.org/en) (v18 or later)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account or a local MongoDB instance.
 - A [Google AI API Key](https://ai.google.dev/gemini-api/docs/api-key) for Gemini.
 
 ### Installation & Setup
@@ -52,12 +50,9 @@ Follow these instructions to get a copy of the project up and running on your lo
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env` file in the root of the project and add the following variables. Replace the placeholder values with your actual credentials.
+    Create a `.env` file in the root of the project and add the following variable. Replace the placeholder value with your actual key.
 
     ```env
-    # Your MongoDB connection string
-    MONGODB_URI="mongodb+srv://<user>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority"
-
     # Your Google AI API Key for Gemini
     GEMINI_API_KEY="your-gemini-api-key"
     ```
