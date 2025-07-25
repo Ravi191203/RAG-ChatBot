@@ -30,21 +30,20 @@ const primaryPrompt = ai.definePrompt({
   name: 'intelligentResponsePrimaryPrompt',
   input: {schema: IntelligentResponseInputSchema},
   output: {schema: IntelligentResponseOutputSchema},
-  prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers.
+  prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and chat history.
 
-First, analyze the provided context to see if it contains the answer to the user's question.
+Analyze the full conversation below, which includes a knowledge base and the chat history. Your task is to answer the last user question in the history.
 
-- If the context has a relevant answer, use it to form a comprehensive response.
-- If the context does not contain the answer, use your own knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
-- If you are unsure or the question is ambiguous, ask for clarification.
+- If the knowledge base or chat history provides a relevant answer, use it to form a comprehensive response.
+- If the context does not contain the answer, use your own general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- If the final question is ambiguous, ask for clarification.
 
 Always strive to be helpful and provide a well-reasoned answer.
 
-Context:
+Full Conversation:
 {{{context}}}
-
-Question:
-{{{question}}}`,
+{{{question}}}
+`,
   model: 'googleai/gemini-1.5-flash-latest',
   retry: {
     backoff: {
@@ -59,21 +58,20 @@ const fallbackPrompt = ai.definePrompt({
     name: 'intelligentResponseFallbackPrompt',
     input: {schema: IntelligentResponseInputSchema},
     output: {schema: IntelligentResponseOutputSchema},
-    prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers.
-  
-First, analyze the provided context to see if it contains the answer to the user's question.
-  
-- If the context has a relevant answer, use it to form a comprehensive response.
-- If the context does not contain the answer, use your own knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
-- If you are unsure or the question is ambiguous, ask for clarification.
-  
+    prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and chat history.
+
+Analyze the full conversation below, which includes a knowledge base and the chat history. Your task is to answer the last user question in the history.
+
+- If the knowledge base or chat history provides a relevant answer, use it to form a comprehensive response.
+- If the context does not contain the answer, use your own general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- If the final question is ambiguous, ask for clarification.
+
 Always strive to be helpful and provide a well-reasoned answer.
-  
-Context:
+
+Full Conversation:
 {{{context}}}
-  
-Question:
-{{{question}}}`,
+{{{question}}}
+`,
     model: 'googleai/gemini-pro',
     retry: {
       backoff: {
