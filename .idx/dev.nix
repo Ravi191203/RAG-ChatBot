@@ -7,6 +7,7 @@
   packages = [
     pkgs.nodejs_20
     pkgs.zulu
+    pkgs.docker
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -25,8 +26,8 @@
     workspace = {
       onCreate = {
         default.openFiles = [
-          "src/app/page.tsx"
-        ];
+          "src/app/page.tsx"]
+        ;
       };
     };
     # Enable previews and customize configuration
