@@ -40,9 +40,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-export async function GET(req: NextRequest) {
-    // This endpoint is no longer used for fetching history.
-    // Returning an empty array for compatibility.
-    return NextResponse.json([]);
-}
