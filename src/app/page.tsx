@@ -5,8 +5,10 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { KnowledgePanel } from "@/components/knowledge-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
-import { Bot } from 'lucide-react';
+import { Bot, MessageSquare } from 'lucide-react';
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 
 export type ChatMessage = {
@@ -69,6 +71,14 @@ export default function Home() {
         <div className="flex items-center gap-2">
             <Bot className="h-7 w-7 text-primary" />
             <h1 className="text-xl font-bold font-headline">Contextual Companion</h1>
+        </div>
+         <div>
+            <Button variant="outline" size="sm" asChild disabled={!knowledge}>
+              <Link href="/chat">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Chat
+              </Link>
+            </Button>
         </div>
       </header>
       <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-start justify-center">
