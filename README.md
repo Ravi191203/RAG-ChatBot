@@ -10,6 +10,7 @@ This project was built to demonstrate the power of combining modern web technolo
 
 - **Dynamic Knowledge Base:** Upload `.txt` or `.md` files, or paste raw text to create a contextual knowledge base on the fly.
 - **Intelligent Knowledge Extraction:** An AI agent analyzes the provided content and synthesizes a comprehensive summary.
+- **Persistent Knowledge:** Save your extracted knowledge to a MongoDB database to reuse across sessions.
 - **Conversational Chat Interface:** Ask questions in natural language and receive context-aware answers based on the document.
 - **Session-Based Chat History:** Conversations are maintained during a browser session.
 - **Responsive Design:** A clean, modern UI that works seamlessly across desktop and mobile devices.
@@ -21,6 +22,7 @@ This project was built to demonstrate the power of combining modern web technolo
 - **Framework:** [Next.js](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **AI & Generative AI:** [Genkit](https://firebase.google.com/docs/genkit) with [Google's Gemini API](https://ai.google.dev/)
+- **Database:** [MongoDB](https://www.mongodb.com/) for persistent knowledge storage.
 - **UI:** [React](https://react.dev/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Component Library:** [ShadCN UI](https://ui.shadcn.com/)
@@ -35,6 +37,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 - [Node.js](https://nodejs.org/en) (v18 or later)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - A [Google AI API Key](https://ai.google.dev/gemini-api/docs/api-key) for Gemini.
+- A [MongoDB connection string URI](https://www.mongodb.com/docs/manual/reference/connection-string/).
 
 ### Installation & Setup
 
@@ -50,11 +53,14 @@ Follow these instructions to get a copy of the project up and running on your lo
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env` file in the root of the project and add the following variable. Replace the placeholder value with your actual key.
+    Create a `.env` file in the root of the project and add the following variables. Replace the placeholder values with your actual keys.
 
     ```env
     # Your Google AI API Key for Gemini
     GEMINI_API_KEY="your-gemini-api-key"
+
+    # Your MongoDB Connection String
+    MONGODB_URI="your-mongodb-connection-string"
     ```
 
 ### Running the Application

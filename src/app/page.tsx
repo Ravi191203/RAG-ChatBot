@@ -28,6 +28,23 @@ export default function Home() {
     const storedKnowledge = sessionStorage.getItem("knowledgeBase");
     if (storedKnowledge) {
       setKnowledge(storedKnowledge);
+    } else {
+      // If not in session, try fetching from DB
+      const fetchKnowledge = async () => {
+        try {
+          const response = await fetch('/api/knowledge');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.knowledge) {
+              setKnowledge(data.knowledge);
+              sessionStorage.setItem("knowledgeBase", data.knowledge);
+            }
+          }
+        } catch (error) {
+          console.error("Could not fetch knowledge from DB", error);
+        }
+      };
+      fetchKnowledge();
     }
   }, []);
 
@@ -56,10 +73,8 @@ export default function Home() {
       
       toast({
         title: "Success",
-        description: "Knowledge extracted. Redirecting to chat...",
+        description: "Knowledge extracted. You can now save it or start a chat.",
       });
-
-      router.push('/chat');
 
     } catch (error) {
       console.error(error);

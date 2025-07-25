@@ -11,7 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FileUp, Loader2, MessageSquareText } from "lucide-react";
+import { FileUp, Loader2, MessageSquareText, Plus } from "lucide-react";
 import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,6 +31,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
   const [activeTab, setActiveTab] = useState("text");
   const [content, setContent] = useState("");
   const [fileName, setFileName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (file: File | null) => {
@@ -81,6 +82,34 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
     }
   };
 
+  const handleSaveKnowledge = async () => {
+    if (!knowledge) return;
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/knowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ knowledge }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || "Failed to save knowledge");
+      }
+      toast({
+        title: "Success",
+        description: "Knowledge saved to the database.",
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save knowledge. Make sure the database is configured.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleExtractSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,9 +231,22 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
 
         </Tabs>
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            {activeTab === 'direct' ? 'Raw Text Preview' : 'Extracted Knowledge'}
-          </h3>
+           <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {activeTab === 'direct' ? 'Raw Text Preview' : 'Extracted Knowledge'}
+            </h3>
+            {activeTab !== 'direct' && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSaveKnowledge}
+                disabled={!knowledge || isSaving}
+              >
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                Save
+              </Button>
+            )}
+          </div>
           <div className="flex-1 rounded-md border bg-muted/50">
             <ScrollArea className="h-full">
               <div className="prose prose-sm dark:prose-invert max-w-none p-4 prose-p:my-0 prose-headings:my-0">
