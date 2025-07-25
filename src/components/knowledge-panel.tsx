@@ -134,7 +134,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
                 <div 
                   onDrop={onDrop}
                   onDragOver={onDragOver}
-                  onClick={() => document.getElementById('file-input')?.click()}
+                  onClick={() => document.getElementById('extract-file-input')?.click()}
                   className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
                 >
                   <FileUp className="h-10 w-10 text-muted-foreground" />
@@ -142,7 +142,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
                     {fileName ? fileName : 'Drag & drop a .txt or .md file here, or click to select'}
                   </p>
                   <input 
-                    id="file-input" 
+                    id="extract-file-input" 
                     type="file" 
                     className="hidden" 
                     onChange={handleFilePicker}
@@ -160,19 +160,43 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
           </TabsContent>
           
           {/* Direct Chat Tab */}
-          <TabsContent value="direct" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
+           <TabsContent value="direct" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
             <form onSubmit={handleDirectChatSubmit} className="flex flex-1 flex-col gap-4">
+              <div className="flex-1 flex flex-col gap-4">
                 <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Paste your raw text here to chat with it directly..."
-                className="flex-1"
-                disabled={isExtracting}
+                  value={content}
+                  onChange={(e) => {
+                    setContent(e.target.value);
+                    setFileName("");
+                  }}
+                  placeholder="Paste raw text here, or upload a file below..."
+                  className="flex-1"
+                  disabled={isExtracting}
                 />
-                <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
-                    <MessageSquareText className="mr-2 h-4 w-4" />
-                    Start Chat
-                </Button>
+                <div 
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                  onClick={() => document.getElementById('direct-file-input')?.click()}
+                  className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <FileUp className="h-8 w-8 text-muted-foreground" />
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {fileName ? fileName : 'Or drop a .txt/.md file here'}
+                  </p>
+                  <input 
+                    id="direct-file-input" 
+                    type="file" 
+                    className="hidden" 
+                    onChange={handleFilePicker}
+                    accept=".txt,.md"
+                    disabled={isExtracting}
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
+                  <MessageSquareText className="mr-2 h-4 w-4" />
+                  Start Chat
+              </Button>
             </form>
           </TabsContent>
 
