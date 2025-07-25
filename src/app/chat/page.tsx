@@ -137,6 +137,7 @@ export default function ChatPage() {
               onSendMessage={handleSendMessage}
               isResponding={isResponding}
               knowledge={knowledge}
+              onMessageSaved={() => {}} // No action needed here, but prop is expected
             />
         </div>
       </main>

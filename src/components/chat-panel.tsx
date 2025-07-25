@@ -22,6 +22,7 @@ type Props = {
   onSendMessage: (question: string) => Promise<void>;
   isResponding: boolean;
   knowledge: string;
+  onMessageSaved: () => void;
 };
 
 export function ChatPanel({
@@ -29,6 +30,7 @@ export function ChatPanel({
   onSendMessage,
   isResponding,
   knowledge,
+  onMessageSaved
 }: Props) {
   const [input, setInput] = useState("");
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
@@ -68,7 +70,7 @@ export function ChatPanel({
                 </div>
               ) : (
                 messages.map((msg, index) => (
-                  <ChatMessage key={index} message={msg} />
+                  <ChatMessage key={index} message={msg} onMessageSaved={onMessageSaved} />
                 ))
               )}
               {isResponding && <TypingIndicator />}

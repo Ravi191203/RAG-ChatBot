@@ -9,6 +9,7 @@ import { Bot, MessageSquare } from 'lucide-react';
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { SavedItemsPanel, SavedItem } from "@/components/saved-items-panel";
 
 
 export type ChatMessage = {
@@ -19,33 +20,38 @@ export type ChatMessage = {
 
 export default function Home() {
   const [knowledge, setKnowledge] = useState<string>("");
+  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+
+  const fetchKnowledgeAndSavedItems = async () => {
+    try {
+      const response = await fetch('/api/knowledge');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.knowledge && !sessionStorage.getItem("knowledgeBase")) {
+          setKnowledge(data.knowledge);
+          sessionStorage.setItem("knowledgeBase", data.knowledge);
+        }
+        if (data.savedItems) {
+          setSavedItems(data.savedItems);
+        }
+      }
+    } catch (error) {
+      console.error("Could not fetch data from DB", error);
+    }
+  };
+
 
   useEffect(() => {
     // On page load, check if knowledge exists in session storage
     const storedKnowledge = sessionStorage.getItem("knowledgeBase");
     if (storedKnowledge) {
       setKnowledge(storedKnowledge);
-    } else {
-      // If not in session, try fetching from DB
-      const fetchKnowledge = async () => {
-        try {
-          const response = await fetch('/api/knowledge');
-          if (response.ok) {
-            const data = await response.json();
-            if (data.knowledge) {
-              setKnowledge(data.knowledge);
-              sessionStorage.setItem("knowledgeBase", data.knowledge);
-            }
-          }
-        } catch (error) {
-          console.error("Could not fetch knowledge from DB", error);
-        }
-      };
-      fetchKnowledge();
-    }
+    } 
+    // Always fetch latest from DB on load
+    fetchKnowledgeAndSavedItems();
   }, []);
 
   const handleExtractKnowledge = async (content: string) => {
@@ -109,6 +115,10 @@ export default function Home() {
     router.push('/chat');
   };
 
+  const onItemsSaved = () => {
+    // Re-fetch saved items to update the list
+    fetchKnowledgeAndSavedItems();
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -126,14 +136,18 @@ export default function Home() {
             </Button>
         </div>
       </header>
-      <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-start justify-center">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-start gap-8">
         <div className="w-full max-w-2xl">
             <KnowledgePanel
               onExtract={handleExtractKnowledge}
               onStartDirectChat={handleStartDirectChat}
               knowledge={knowledge}
               isExtracting={isExtracting}
+              onKnowledgeSaved={onItemsSaved}
             />
+        </div>
+        <div className="w-full max-w-2xl">
+           <SavedItemsPanel savedItems={savedItems} />
         </div>
       </main>
       <footer className="py-4 px-4 sm:px-6 md:px-8">
@@ -189,3 +203,4 @@ export default function Home() {
     </div>
   );
 }
+

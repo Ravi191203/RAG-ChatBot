@@ -25,9 +25,10 @@ type Props = {
   onStartDirectChat: (content: string) => void;
   knowledge: string;
   isExtracting: boolean;
+  onKnowledgeSaved: () => void;
 };
 
-export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtracting }: Props) {
+export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtracting, onKnowledgeSaved }: Props) {
   const [activeTab, setActiveTab] = useState("text");
   const [content, setContent] = useState("");
   const [fileName, setFileName] = useState("");
@@ -89,7 +90,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
       const response = await fetch('/api/knowledge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ knowledge }),
+        body: JSON.stringify({ knowledge, type: 'knowledge' }),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -99,6 +100,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
         title: "Success",
         description: "Knowledge saved to the database.",
       });
+      onKnowledgeSaved();
     } catch (error) {
       console.error(error);
       toast({

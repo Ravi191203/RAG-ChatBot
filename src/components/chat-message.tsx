@@ -15,9 +15,10 @@ import { Loader2 } from "lucide-react";
 
 type Props = {
   message: ChatMessageType;
+  onMessageSaved?: () => void;
 };
 
-export function ChatMessage({ message }: Props) {
+export function ChatMessage({ message, onMessageSaved }: Props) {
   const isUser = message.role === "user";
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -28,7 +29,7 @@ export function ChatMessage({ message }: Props) {
       const response = await fetch('/api/knowledge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ knowledge: message.content }),
+        body: JSON.stringify({ knowledge: message.content, type: 'chat_message' }),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -38,6 +39,9 @@ export function ChatMessage({ message }: Props) {
         title: "Success",
         description: "Message saved to the database.",
       });
+      if (onMessageSaved) {
+        onMessageSaved();
+      }
     } catch (error) {
       console.error(error);
       toast({
