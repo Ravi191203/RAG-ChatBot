@@ -1,6 +1,8 @@
 
 import {NextRequest, NextResponse} from 'next/server';
 import {intelligentResponse} from '@/ai/flows/intelligent-responses';
+import { connectToDatabase } from '@/lib/mongodb';
+
 
 export type ChatMessage = {
   sessionId: string;
@@ -19,10 +21,29 @@ export async function POST(req: NextRequest) {
         {status: 400}
       );
     }
+
+    let dbKnowledge = "";
+    if (process.env.MONGODB_URI) {
+        try {
+            const { db } = await connectToDatabase();
+            const lastKnowledge = await db.collection('knowledge_base').findOne(
+                {},
+                { sort: { createdAt: -1 } }
+            );
+            if (lastKnowledge) {
+                dbKnowledge = lastKnowledge.content;
+            }
+        } catch (dbError) {
+            console.warn("Database connection failed, continuing without DB knowledge.", dbError);
+        }
+    }
     
+    // Combine session knowledge with DB knowledge
+    const combinedKnowledge = [knowledge, dbKnowledge].filter(Boolean).join('\n\n---\n\n');
+
     // Construct the context from the knowledge base and all messages EXCEPT the last one (the question)
     const context =
-      (knowledge ? `--- Knowledge Base ---\n${knowledge}\n\n` : '') +
+      (combinedKnowledge ? `--- Knowledge Base ---\n${combinedKnowledge}\n\n` : '') +
       '--- Chat History ---\n' +
       history.slice(0, -1).map((h: {role: string; content: string;}) => `${h.role}: ${h.content}`).join('\n');
 
