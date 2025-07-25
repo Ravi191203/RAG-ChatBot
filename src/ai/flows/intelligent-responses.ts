@@ -35,8 +35,9 @@ const primaryPrompt = ai.definePrompt({
 
 Analyze the context and chat history below, then answer the user's question.
 
-- If the knowledge base or chat history provides a relevant answer, use it to form a comprehensive response.
-- If the context does not contain the answer, use your own general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
+- If the context does not contain the answer, use your own extensive general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- Do not mention that you cannot access the internet. Instead, answer based on the information you were trained on.
 - If the question is ambiguous, ask for clarification.
 
 Always strive to be helpful and provide a well-reasoned answer.
@@ -65,8 +66,9 @@ const fallbackPrompt = ai.definePrompt({
 
 Analyze the context and chat history below, then answer the user's question.
 
-- If the knowledge base or chat history provides a relevant answer, use it to form a comprehensive response.
-- If the context does not contain the answer, use your own general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
+- If the context does not contain the answer, use your own extensive general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- Do not mention that you cannot access the internet. Instead, answer based on the information you were trained on.
 - If the question is ambiguous, ask for clarification.
 
 Always strive to be helpful and provide a well-reasoned answer.
