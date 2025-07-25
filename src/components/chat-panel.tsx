@@ -1,6 +1,7 @@
+
 "use client";
 
-import type { ChatMessage as ChatMessageType } from "@/app/page";
+import type { ChatMessage as ChatMessageType } from "@/app/chat/page";
 import { Button } from "@/components/ui/button";
 import {
   Card,

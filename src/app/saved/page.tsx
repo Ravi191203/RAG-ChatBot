@@ -1,0 +1,76 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { SavedItemsPanel, SavedItem } from "@/components/saved-items-panel";
+import { Bot, Home, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
+
+export default function SavedPage() {
+    const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const fetchSavedItems = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch('/api/knowledge');
+                if (!response.ok) {
+                    throw new Error("Failed to fetch saved items");
+                }
+                const data = await response.json();
+                setSavedItems(data.savedItems || []);
+            } catch (error) {
+                console.error("Could not fetch data from DB", error);
+                toast({
+                    title: "Error",
+                    description: "Could not load saved items. Please try again later.",
+                    variant: "destructive",
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSavedItems();
+    }, [toast]);
+
+    return (
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
+            <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+                <div className="flex items-center gap-2">
+                    <Bot className="h-7 w-7 text-primary" />
+                    <h1 className="text-xl font-bold font-headline">Contextual Companion</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/">
+                            <Home className="mr-2 h-4 w-4" />
+                            Home
+                        </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/chat">
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Chat
+                        </Link>
+                    </Button>
+                </div>
+            </header>
+            <main className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-start gap-8">
+                <div className="w-full max-w-4xl">
+                   {isLoading ? (
+                        <div className="flex justify-center items-center h-64">
+                            <p className="text-muted-foreground">Loading saved items...</p>
+                        </div>
+                   ) : (
+                        <SavedItemsPanel savedItems={savedItems} />
+                   )}
+                </div>
+            </main>
+        </div>
+    );
+}

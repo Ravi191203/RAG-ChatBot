@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatPanel } from "@/components/chat-panel";
-import { Bot, Home } from 'lucide-react';
+import { Bot, Home, MessageSquare, Save } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -114,6 +114,13 @@ export default function ChatPage() {
     }
   };
 
+  const onMessageSaved = () => {
+    toast({
+        title: "Saved!",
+        description: "Your item has been saved successfully.",
+    });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
@@ -121,7 +128,13 @@ export default function ChatPage() {
             <Bot className="h-7 w-7 text-primary" />
             <h1 className="text-xl font-bold font-headline">Contextual Companion</h1>
         </div>
-         <div>
+         <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+                <Link href="/saved">
+                    <Save className="mr-2 h-4 w-4" />
+                    Saved
+                </Link>
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
@@ -137,7 +150,7 @@ export default function ChatPage() {
               onSendMessage={handleSendMessage}
               isResponding={isResponding}
               knowledge={knowledge}
-              onMessageSaved={() => {}} // No action needed here, but prop is expected
+              onMessageSaved={onMessageSaved}
             />
         </div>
       </main>

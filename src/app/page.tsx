@@ -5,11 +5,10 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { KnowledgePanel } from "@/components/knowledge-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
-import { Bot, MessageSquare } from 'lucide-react';
+import { Bot, MessageSquare, Save } from 'lucide-react';
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { SavedItemsPanel, SavedItem } from "@/components/saved-items-panel";
 
 
 export type ChatMessage = {
@@ -20,12 +19,11 @@ export type ChatMessage = {
 
 export default function Home() {
   const [knowledge, setKnowledge] = useState<string>("");
-  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
-  const fetchKnowledgeAndSavedItems = async () => {
+  const fetchLastKnowledge = async () => {
     try {
       const response = await fetch('/api/knowledge');
       if (response.ok) {
@@ -34,12 +32,9 @@ export default function Home() {
           setKnowledge(data.knowledge);
           sessionStorage.setItem("knowledgeBase", data.knowledge);
         }
-        if (data.savedItems) {
-          setSavedItems(data.savedItems);
-        }
       }
     } catch (error) {
-      console.error("Could not fetch data from DB", error);
+      console.error("Could not fetch last knowledge from DB", error);
     }
   };
 
@@ -49,9 +44,10 @@ export default function Home() {
     const storedKnowledge = sessionStorage.getItem("knowledgeBase");
     if (storedKnowledge) {
       setKnowledge(storedKnowledge);
-    } 
-    // Always fetch latest from DB on load
-    fetchKnowledgeAndSavedItems();
+    } else {
+        // If not in session, try fetching the last one from DB
+        fetchLastKnowledge();
+    }
   }, []);
 
   const handleExtractKnowledge = async (content: string) => {
@@ -116,8 +112,10 @@ export default function Home() {
   };
 
   const onItemsSaved = () => {
-    // Re-fetch saved items to update the list
-    fetchKnowledgeAndSavedItems();
+    toast({
+        title: "Saved!",
+        description: "Your item has been saved successfully.",
+    });
   };
 
   return (
@@ -127,7 +125,13 @@ export default function Home() {
             <Bot className="h-7 w-7 text-primary" />
             <h1 className="text-xl font-bold font-headline">Contextual Companion</h1>
         </div>
-         <div>
+         <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+                <Link href="/saved">
+                    <Save className="mr-2 h-4 w-4" />
+                    Saved
+                </Link>
+            </Button>
             <Button variant="outline" size="sm" asChild disabled={!knowledge}>
               <Link href="/chat">
                 <MessageSquare className="mr-2 h-4 w-4" />
@@ -145,9 +149,6 @@ export default function Home() {
               isExtracting={isExtracting}
               onKnowledgeSaved={onItemsSaved}
             />
-        </div>
-        <div className="w-full max-w-2xl">
-           <SavedItemsPanel savedItems={savedItems} />
         </div>
       </main>
       <footer className="py-4 px-4 sm:px-6 md:px-8">
@@ -203,4 +204,3 @@ export default function Home() {
     </div>
   );
 }
-
