@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SavedItemsPanel, SavedItem } from "@/components/saved-items-panel";
 import { Bot, Home, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,30 +13,30 @@ export default function SavedPage() {
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
 
-    useEffect(() => {
-        const fetchSavedItems = async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetch('/api/knowledge');
-                if (!response.ok) {
-                    throw new Error("Failed to fetch saved items");
-                }
-                const data = await response.json();
-                setSavedItems(data.savedItems || []);
-            } catch (error) {
-                console.error("Could not fetch data from DB", error);
-                toast({
-                    title: "Error",
-                    description: "Could not load saved items. Please try again later.",
-                    variant: "destructive",
-                });
-            } finally {
-                setIsLoading(false);
+    const fetchSavedItems = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/knowledge');
+            if (!response.ok) {
+                throw new Error("Failed to fetch saved items");
             }
-        };
-
-        fetchSavedItems();
+            const data = await response.json();
+            setSavedItems(data.savedItems || []);
+        } catch (error) {
+            console.error("Could not fetch data from DB", error);
+            toast({
+                title: "Error",
+                description: "Could not load saved items. Please try again later.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }, [toast]);
+
+    useEffect(() => {
+        fetchSavedItems();
+    }, [fetchSavedItems]);
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -67,7 +67,11 @@ export default function SavedPage() {
                             <p className="text-muted-foreground">Loading saved items...</p>
                         </div>
                    ) : (
-                        <SavedItemsPanel savedItems={savedItems} />
+                        <SavedItemsPanel 
+                            savedItems={savedItems} 
+                            onItemDeleted={fetchSavedItems} 
+                            onItemUpdated={fetchSavedItems}
+                        />
                    )}
                 </div>
             </main>
