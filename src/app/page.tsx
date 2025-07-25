@@ -99,7 +99,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ knowledge, sessionId, history: newMessages }),
+        body: JSON.stringify({ knowledge, sessionId, history: newMessages, question }),
       });
 
       if (!response.ok) {

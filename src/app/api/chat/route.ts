@@ -11,30 +11,31 @@ export type ChatMessage = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { knowledge, sessionId, history } = await req.json();
+    const { knowledge, sessionId, history, question } = await req.json();
 
-    if (!history || history.length === 0 || !sessionId) {
+    if (!history || !question || !sessionId) {
       return NextResponse.json(
-        {error: 'Missing history or sessionId'},
+        {error: 'Missing history, question, or sessionId'},
         {status: 400}
       );
     }
     
-    // Construct the full context from knowledge base and the entire chat history
+    // Construct the context from the knowledge base and all messages EXCEPT the last one (the question)
     const context =
       (knowledge ? `--- Knowledge Base ---\n${knowledge}\n\n` : '') +
       '--- Chat History ---\n' +
-      history.map((h: {role: string; content: string;}) => `${h.role}: ${h.content}`).join('\n');
+      history.slice(0, -1).map((h: {role: string; content: string;}) => `${h.role}: ${h.content}`).join('\n');
 
     const result = await intelligentResponse({
       context: context,
+      question: question,
     });
 
     return NextResponse.json({answer: result.answer});
   } catch (error: any) {
     console.error('Error in chat API:', error);
     return NextResponse.json(
-      {error: 'Internal Server Error', details: error.message},
+      {error: 'Internal ServerError', details: error.message},
       {status: 500}
     );
   }
