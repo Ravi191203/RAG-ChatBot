@@ -26,6 +26,7 @@ This project was built to demonstrate the power of combining modern web technolo
 - **UI:** [React](https://react.dev/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Component Library:** [ShadCN UI](https://ui.shadcn.com/)
+- **Containerization:** [Docker](https://www.docker.com/)
 - **Deployment:** Ready for [Firebase App Hosting](https://firebase.google.com/docs/hosting)
 
 ## 🛠️ Getting Started
@@ -72,6 +73,27 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 2.  **Open your browser:**
     Navigate to [http://localhost:3000](http://localhost:3000) to see the application in action.
+
+## 🐳 Running with Docker
+
+For easy and consistent deployment, you can run this application inside a Docker container.
+
+1.  **Build the Docker image:**
+    From the root directory of the project, run the following command. This will build the image and tag it as `contextual-companion`.
+    ```bash
+    docker build -t contextual-companion .
+    ```
+
+2.  **Run the Docker container:**
+    Once the image is built, run the following command. This will start the container, pass your local `.env` file to it, and map port `3000` from the container to your local machine.
+    ```bash
+    docker run --env-file .env -p 3000:3000 contextual-companion
+    ```
+    
+    _**Note:** Ensure your `.env` file in the project root is populated with the `GEMINI_API_KEY` and `MONGODB_URI` before running this command._
+
+3.  **Access the application:**
+    You can now access the running application in your browser at [http://localhost:3000](http://localhost:3000).
 
 ## 🤖 AI & Genkit
 
