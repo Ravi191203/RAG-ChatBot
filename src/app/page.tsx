@@ -52,7 +52,10 @@ export default function Home() {
           const response = await fetch(`/api/chat?sessionId=${sessionId}`);
           if (response.ok) {
             const history: ApiChatMessage[] = await response.json();
-            setMessages(history.map(h => ({ role: h.role, content: h.content })));
+            // Only update messages if history is not empty
+            if (history.length > 0) {
+              setMessages(history.map(h => ({ role: h.role, content: h.content })));
+            }
           }
         } catch (error) {
           console.error("Failed to fetch chat history:", error);
@@ -107,8 +110,9 @@ export default function Home() {
       });
       return;
     }
-    const userMessage: ChatMessage = { role: "user", content: question };
-    setMessages((prev) => [...prev, userMessage]);
+    
+    const currentMessages: ChatMessage[] = [...messages, { role: "user", content: question }];
+    setMessages(currentMessages);
     setIsResponding(true);
 
     try {
@@ -117,11 +121,12 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question, knowledge, sessionId }),
+        body: JSON.stringify({ question, knowledge, sessionId, history: messages }),
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'API request failed');
       }
 
       const result = await response.json();
@@ -236,6 +241,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-    
