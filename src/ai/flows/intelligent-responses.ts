@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -12,8 +13,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const IntelligentResponseInputSchema = z.object({
-  question: z.string().describe('The question to answer.'),
-  context: z.string().describe('The context to use when answering the question.'),
+  context: z.string().describe('The full conversation context, including any knowledge base and the entire chat history.'),
 });
 export type IntelligentResponseInput = z.infer<typeof IntelligentResponseInputSchema>;
 
@@ -30,9 +30,9 @@ const primaryPrompt = ai.definePrompt({
   name: 'intelligentResponsePrimaryPrompt',
   input: {schema: IntelligentResponseInputSchema},
   output: {schema: IntelligentResponseOutputSchema},
-  prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and chat history.
+  prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context.
 
-Analyze the full conversation below, which includes a knowledge base and the chat history. Your task is to answer the last user question in the history.
+Analyze the full conversation context below, which may include a knowledge base and the chat history. Your task is to answer the last user question in the history.
 
 - If the knowledge base or chat history provides a relevant answer, use it to form a comprehensive response.
 - If the context does not contain the answer, use your own general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
@@ -40,9 +40,8 @@ Analyze the full conversation below, which includes a knowledge base and the cha
 
 Always strive to be helpful and provide a well-reasoned answer.
 
-Full Conversation:
+Full Conversation Context:
 {{{context}}}
-{{{question}}}
 `,
   model: 'googleai/gemini-1.5-flash-latest',
   retry: {
@@ -58,9 +57,9 @@ const fallbackPrompt = ai.definePrompt({
     name: 'intelligentResponseFallbackPrompt',
     input: {schema: IntelligentResponseInputSchema},
     output: {schema: IntelligentResponseOutputSchema},
-    prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and chat history.
+    prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context.
 
-Analyze the full conversation below, which includes a knowledge base and the chat history. Your task is to answer the last user question in the history.
+Analyze the full conversation context below, which may include a knowledge base and the chat history. Your task is to answer the last user question in the history.
 
 - If the knowledge base or chat history provides a relevant answer, use it to form a comprehensive response.
 - If the context does not contain the answer, use your own general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
@@ -68,9 +67,8 @@ Analyze the full conversation below, which includes a knowledge base and the cha
 
 Always strive to be helpful and provide a well-reasoned answer.
 
-Full Conversation:
+Full Conversation Context:
 {{{context}}}
-{{{question}}}
 `,
     model: 'googleai/gemini-pro',
     retry: {

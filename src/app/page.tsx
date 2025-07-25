@@ -89,8 +89,8 @@ export default function Home() {
       return;
     }
     
-    const currentMessages: ChatMessage[] = [...messages, { role: "user", content: question }];
-    setMessages(currentMessages);
+    const newMessages: ChatMessage[] = [...messages, { role: "user", content: question }];
+    setMessages(newMessages);
     setIsResponding(true);
 
     try {
@@ -99,7 +99,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question, knowledge, sessionId, history: messages }),
+        body: JSON.stringify({ knowledge, sessionId, history: newMessages }),
       });
 
       if (!response.ok) {

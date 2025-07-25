@@ -11,29 +11,24 @@ export type ChatMessage = {
 
 export async function POST(req: NextRequest) {
   try {
-    const {question, knowledge, sessionId, history: clientHistory} = await req.json();
+    const { knowledge, sessionId, history } = await req.json();
 
-    if (!question || !sessionId) {
+    if (!history || history.length === 0 || !sessionId) {
       return NextResponse.json(
-        {error: 'Missing question or sessionId'},
+        {error: 'Missing history or sessionId'},
         {status: 400}
       );
     }
     
-    // Construct history from client-side history + new question
-    const history: Omit<ChatMessage, 'timestamp'>[] = [...(clientHistory || []), { role: 'user', content: question, sessionId }];
-    
-    const contextWithHistory =
-      (knowledge || '') +
-      '\n\n--- Chat History ---\n' +
-      history.map(h => `${h.role}: ${h.content}`).join('\n');
-
+    // Construct the full context from knowledge base and the entire chat history
+    const context =
+      (knowledge ? `--- Knowledge Base ---\n${knowledge}\n\n` : '') +
+      '--- Chat History ---\n' +
+      history.map((h: {role: string; content: string;}) => `${h.role}: ${h.content}`).join('\n');
 
     const result = await intelligentResponse({
-      question,
-      context: contextWithHistory,
+      context: context,
     });
-
 
     return NextResponse.json({answer: result.answer});
   } catch (error: any) {
