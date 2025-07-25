@@ -38,6 +38,8 @@ export default function ChatPage() {
   useEffect(() => {
     const id = getSessionId();
     setSessionId(id);
+    
+    // Load state from session storage
     const storedKnowledge = sessionStorage.getItem("knowledgeBase");
     if (storedKnowledge) {
       setKnowledge(storedKnowledge);
@@ -48,7 +50,19 @@ export default function ChatPage() {
             variant: "destructive",
         })
     }
+
+    const storedMessages = sessionStorage.getItem("chatMessages");
+    if (storedMessages) {
+        setMessages(JSON.parse(storedMessages));
+    }
   }, [toast]);
+
+  // Persist messages to session storage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem("chatMessages", JSON.stringify(messages));
+    }
+  }, [messages]);
 
 
   const handleSendMessage = async (question: string) => {

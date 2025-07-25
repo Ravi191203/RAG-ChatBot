@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { KnowledgePanel } from "@/components/knowledge-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
@@ -23,6 +23,13 @@ export default function Home() {
   const { toast } = useToast();
   const router = useRouter();
 
+  useEffect(() => {
+    // On page load, check if knowledge exists in session storage
+    const storedKnowledge = sessionStorage.getItem("knowledgeBase");
+    if (storedKnowledge) {
+      setKnowledge(storedKnowledge);
+    }
+  }, []);
 
   const handleExtractKnowledge = async (content: string) => {
     if (!content) {
@@ -43,6 +50,8 @@ export default function Home() {
 
       if (typeof window !== 'undefined') {
         sessionStorage.setItem("knowledgeBase", extracted);
+        // Clear previous chat messages when new knowledge is extracted
+        sessionStorage.removeItem("chatMessages");
       }
       
       toast({
