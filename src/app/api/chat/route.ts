@@ -59,12 +59,20 @@ export async function POST(req: NextRequest) {
         {status: 400}
       );
     }
-
+    
+    // Save the user's message first to maintain order
+    await saveChatMessage({
+      sessionId,
+      role: 'user',
+      content: question,
+    });
+    
     let history: ChatMessage[] = [];
     if (dbEnabled) {
       history = await getChatHistory(sessionId);
     } else {
-      history = clientHistory || [];
+      // If DB is not enabled, construct history from client-side history + new question
+      history = [...(clientHistory || []), { role: 'user', content: question, sessionId, timestamp: new Date() }];
     }
     
     const contextWithHistory =
@@ -72,11 +80,6 @@ export async function POST(req: NextRequest) {
       '\n\n--- Chat History ---\n' +
       history.map(h => `${h.role}: ${h.content}`).join('\n');
 
-    await saveChatMessage({
-      sessionId,
-      role: 'user',
-      content: question,
-    });
 
     const result = await intelligentResponse({
       question,
