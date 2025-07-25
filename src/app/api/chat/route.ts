@@ -39,16 +39,16 @@ export async function POST(req: NextRequest) {
   try {
     const {question, knowledge, sessionId} = await req.json();
 
-    if (!question || !knowledge || !sessionId) {
+    if (!question || !sessionId) {
       return NextResponse.json(
-        {error: 'Missing required fields'},
+        {error: 'Missing question or sessionId'},
         {status: 400}
       );
     }
 
     const history = await getChatHistory(sessionId);
     const contextWithHistory =
-      knowledge +
+      (knowledge || '') +
       '\n\n--- Chat History ---\n' +
       history.map(h => `${h.role}: ${h.content}`).join('\n');
 
