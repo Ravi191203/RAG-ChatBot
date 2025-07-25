@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -10,7 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FileUp, Loader2 } from "lucide-react";
+import { FileUp, Loader2, MessageSquareText } from "lucide-react";
 import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,11 +22,13 @@ import { CodeBlock } from "./code-block";
 
 type Props = {
   onExtract: (content: string) => Promise<void>;
+  onStartDirectChat: (content: string) => void;
   knowledge: string;
   isExtracting: boolean;
 };
 
-export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
+export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtracting }: Props) {
+  const [activeTab, setActiveTab] = useState("text");
   const [content, setContent] = useState("");
   const [fileName, setFileName] = useState("");
   const { toast } = useToast();
@@ -79,20 +82,15 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
   };
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleExtractSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) {
-      toast({
-        title: "Error",
-        description: "Content cannot be empty.",
-        variant: "destructive",
-      });
-      return;
-    }
     onExtract(content);
-    setContent("");
-    setFileName("");
   };
+
+  const handleDirectChatSubmit = (e: React.FormEvent) => {
+     e.preventDefault();
+     onStartDirectChat(content);
+  }
 
   return (
     <Card className="flex h-full flex-col">
@@ -103,55 +101,86 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-4 overflow-hidden">
-        <Tabs defaultValue="text" className="flex flex-1 flex-col gap-4 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col gap-4 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="text">Paste Text</TabsTrigger>
             <TabsTrigger value="file">Upload File</TabsTrigger>
+            <TabsTrigger value="direct">Direct Chat</TabsTrigger>
           </TabsList>
-          <TabsContent value="text" className="flex flex-1 flex-col gap-4 overflow-hidden">
-            <Textarea
-              value={content}
-              onChange={(e) => {
-                setContent(e.target.value);
-                setFileName(""); 
-              }}
-              placeholder="Paste your document content here..."
-              className="flex-1"
-              disabled={isExtracting}
-            />
+
+          {/* AI Extraction Tabs */}
+          <TabsContent value="text" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
+             <form onSubmit={handleExtractSubmit} className="flex flex-1 flex-col gap-4">
+                <Textarea
+                  value={content}
+                  onChange={(e) => {
+                    setContent(e.target.value);
+                    setFileName(""); 
+                  }}
+                  placeholder="Paste your document content here to have the AI extract key knowledge..."
+                  className="flex-1"
+                  disabled={isExtracting}
+                />
+                <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
+                  {isExtracting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Extract Knowledge
+                </Button>
+            </form>
           </TabsContent>
           <TabsContent value="file" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
-            <div 
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onClick={() => document.getElementById('file-input')?.click()}
-              className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-            >
-              <FileUp className="h-10 w-10 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">
-                {fileName ? fileName : 'Drag & drop a .txt or .md file here, or click to select'}
-              </p>
-              <input 
-                id="file-input" 
-                type="file" 
-                className="hidden" 
-                onChange={handleFilePicker}
-                accept=".txt,.md"
-                disabled={isExtracting}
-              />
-            </div>
+             <form onSubmit={handleExtractSubmit} className="flex flex-1 flex-col gap-4">
+                <div 
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                  onClick={() => document.getElementById('file-input')?.click()}
+                  className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <FileUp className="h-10 w-10 text-muted-foreground" />
+                  <p className="mt-4 text-muted-foreground">
+                    {fileName ? fileName : 'Drag & drop a .txt or .md file here, or click to select'}
+                  </p>
+                  <input 
+                    id="file-input" 
+                    type="file" 
+                    className="hidden" 
+                    onChange={handleFilePicker}
+                    accept=".txt,.md"
+                    disabled={isExtracting}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
+                  {isExtracting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Extract Knowledge
+                </Button>
+            </form>
           </TabsContent>
-          <form onSubmit={handleSubmit} className="pt-4">
-            <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
-              {isExtracting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Extract Knowledge
-            </Button>
-          </form>
+          
+          {/* Direct Chat Tab */}
+          <TabsContent value="direct" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
+            <form onSubmit={handleDirectChatSubmit} className="flex flex-1 flex-col gap-4">
+                <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Paste your raw text here to chat with it directly..."
+                className="flex-1"
+                disabled={isExtracting}
+                />
+                <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
+                    <MessageSquareText className="mr-2 h-4 w-4" />
+                    Start Chat
+                </Button>
+            </form>
+          </TabsContent>
+
         </Tabs>
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Extracted Knowledge</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">
+            {activeTab === 'direct' ? 'Raw Text Preview' : 'Extracted Knowledge'}
+          </h3>
           <div className="flex-1 rounded-md border bg-muted/50">
             <ScrollArea className="h-full">
               <div className="prose prose-sm dark:prose-invert max-w-none p-4 prose-p:my-0 prose-headings:my-0">
@@ -165,7 +194,7 @@ export function KnowledgePanel({ onExtract, knowledge, isExtracting }: Props) {
                     {knowledge}
                   </ReactMarkdown>
                 ) : (
-                  <p className="text-muted-foreground">No knowledge extracted yet.</p>
+                  <p className="text-muted-foreground">No knowledge configured yet.</p>
                 )}
               </div>
             </ScrollArea>

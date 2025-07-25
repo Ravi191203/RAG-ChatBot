@@ -73,6 +73,27 @@ export default function Home() {
     }
   };
 
+  const handleStartDirectChat = (content: string) => {
+    if (!content.trim()) {
+      toast({
+        title: "Error",
+        description: "Content cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setKnowledge(content);
+     if (typeof window !== 'undefined') {
+        sessionStorage.setItem("knowledgeBase", content);
+        sessionStorage.removeItem("chatMessages");
+      }
+    toast({
+        title: "Success",
+        description: "Raw text saved. Redirecting to chat...",
+    });
+    router.push('/chat');
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -94,6 +115,7 @@ export default function Home() {
         <div className="w-full max-w-2xl">
             <KnowledgePanel
               onExtract={handleExtractKnowledge}
+              onStartDirectChat={handleStartDirectChat}
               knowledge={knowledge}
               isExtracting={isExtracting}
             />
