@@ -115,6 +115,16 @@ export default function ChatPage() {
     }
   };
 
+  const handleRegenerateResponse = () => {
+    const lastUserMessage = messages.findLast((msg) => msg.role === 'user');
+    if (!lastUserMessage) return;
+
+    // Remove the last two messages (user's last prompt and assistant's last response)
+    // and then resubmit the user's prompt. We remove the user prompt to avoid duplication.
+    setMessages((prev) => prev.slice(0, -1));
+    handleSendMessage(lastUserMessage.content);
+  };
+
   const onMessageSaved = () => {
     toast({
         title: "Saved!",
@@ -155,6 +165,7 @@ export default function ChatPage() {
             <ChatPanel
               messages={messages}
               onSendMessage={handleSendMessage}
+              onRegenerate={handleRegenerateResponse}
               isResponding={isResponding}
               knowledge={knowledge}
               onMessageSaved={onMessageSaved}

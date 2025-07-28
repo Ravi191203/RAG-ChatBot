@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollAreaViewport } from "@/components/ui/scroll-area";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { TypingIndicator } from "./typing-indicator";
@@ -29,6 +29,7 @@ import {
 type Props = {
   messages: ChatMessageType[];
   onSendMessage: (question: string) => Promise<void>;
+  onRegenerate: () => void;
   isResponding: boolean;
   knowledge?: string; // Optional for global chat
   onMessageSaved: () => void;
@@ -41,6 +42,7 @@ type Props = {
 export function ChatPanel({
   messages,
   onSendMessage,
+  onRegenerate,
   isResponding,
   knowledge,
   onMessageSaved,
@@ -51,6 +53,8 @@ export function ChatPanel({
 }: Props) {
   const [input, setInput] = useState("");
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
+
+  const lastMessageIsAssistant = messages.length > 0 && messages[messages.length - 1].role === 'assistant';
 
   useEffect(() => {
     if (scrollAreaViewportRef.current) {
@@ -110,7 +114,13 @@ export function ChatPanel({
                 </div>
               ) : (
                 messages.map((msg, index) => (
-                  <ChatMessage key={index} message={msg} onMessageSaved={onMessageSaved} />
+                  <ChatMessage 
+                    key={index} 
+                    message={msg} 
+                    isLastMessage={index === messages.length - 1}
+                    onRegenerate={onRegenerate}
+                    onMessageSaved={onMessageSaved}
+                 />
                 ))
               )}
               {isResponding && <TypingIndicator />}
@@ -119,34 +129,47 @@ export function ChatPanel({
         </ScrollArea>
       </CardContent>
       <CardFooter className="pt-4">
-        <form
-          onSubmit={handleSubmit}
-          className="flex w-full items-center space-x-2"
-        >
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              isChatDisabled && knowledge !== undefined
-                ? "Waiting for knowledge base..."
-                : "Type your question..."
-            }
-            disabled={isChatDisabled}
-            autoComplete="off"
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={isChatDisabled || !input.trim()}
-            aria-label="Send message"
-          >
-            {isResponding ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
+        <div className="flex w-full items-center space-x-2">
+            <form
+            onSubmit={handleSubmit}
+            className="flex w-full items-center space-x-2"
+            >
+            <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={
+                isChatDisabled && knowledge !== undefined
+                    ? "Waiting for knowledge base..."
+                    : "Type your question..."
+                }
+                disabled={isChatDisabled}
+                autoComplete="off"
+            />
+            <Button
+                type="submit"
+                size="icon"
+                disabled={isChatDisabled || !input.trim()}
+                aria-label="Send message"
+            >
+                {isResponding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                <Send className="h-4 w-4" />
+                )}
+            </Button>
+            </form>
+            {lastMessageIsAssistant && !isResponding && (
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={onRegenerate}
+                    disabled={isResponding}
+                    aria-label="Regenerate response"
+                    >
+                    <RefreshCw className="h-4 w-4" />
+                </Button>
             )}
-          </Button>
-        </form>
+        </div>
       </CardFooter>
     </Card>
   );

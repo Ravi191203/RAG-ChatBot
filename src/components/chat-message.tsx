@@ -4,7 +4,7 @@
 import type { ChatMessage as ChatMessageType } from "@/app/chat/page";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, Plus, Speaker } from "lucide-react";
+import { Bot, User, Plus, Speaker, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CodeBlock } from "./code-block";
@@ -16,10 +16,12 @@ import { Loader2 } from "lucide-react";
 
 type Props = {
   message: ChatMessageType;
+  isLastMessage: boolean;
+  onRegenerate?: () => void;
   onMessageSaved?: () => void;
 };
 
-export function ChatMessage({ message, onMessageSaved }: Props) {
+export function ChatMessage({ message, isLastMessage, onRegenerate, onMessageSaved }: Props) {
   const isUser = message.role === "user";
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -126,7 +128,7 @@ export function ChatMessage({ message, onMessageSaved }: Props) {
           </ReactMarkdown>
         </div>
          {!isUser && (
-          <div className="absolute -right-24 top-1/2 flex -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="absolute -right-36 top-1/2 flex -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
             <Button variant="ghost" size="icon" onClick={handlePlayAudio} disabled={isSynthesizing}>
               {isSynthesizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Speaker className="h-4 w-4" />}
               <span className="sr-only">Play Audio</span>
@@ -135,6 +137,12 @@ export function ChatMessage({ message, onMessageSaved }: Props) {
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               <span className="sr-only">Save Message</span>
             </Button>
+            {isLastMessage && onRegenerate && (
+                <Button variant="ghost" size="icon" onClick={onRegenerate}>
+                    <RefreshCw className="h-4 w-4" />
+                    <span className="sr-only">Regenerate Response</span>
+                </Button>
+            )}
           </div>
         )}
       </div>

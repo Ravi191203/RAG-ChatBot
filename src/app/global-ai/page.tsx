@@ -104,6 +104,15 @@ export default function GlobalAiPage() {
     }
   };
 
+  const handleRegenerateResponse = () => {
+    const lastUserMessage = messages.findLast((msg) => msg.role === 'user');
+    if (!lastUserMessage) return;
+
+    // Remove the last AI response and resubmit the user's prompt
+    setMessages((prev) => prev.slice(0, -1));
+    handleSendMessage(lastUserMessage.content);
+  };
+
   const onMessageSaved = () => {
     toast({
         title: "Saved!",
@@ -144,6 +153,7 @@ export default function GlobalAiPage() {
             <ChatPanel
               messages={messages}
               onSendMessage={handleSendMessage}
+              onRegenerate={handleRegenerateResponse}
               isResponding={isResponding}
               onMessageSaved={onMessageSaved}
               selectedModel={selectedModel}
