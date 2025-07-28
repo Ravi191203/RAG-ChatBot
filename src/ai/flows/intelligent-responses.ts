@@ -12,6 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {ModelReference} from 'genkit/model';
+import {googleAI} from '@genkit-ai/googleai';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
@@ -90,31 +91,35 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const model = input.model || 'googleai/gemini-1.5-flash-latest';
+    const modelName = input.model || 'googleai/gemini-1.5-flash-latest';
+    const model = googleAI.model(modelName as ModelReference<any>);
     
     try {
         let response;
         const promptInput = { context: input.context, question: input.question };
 
-        switch (model) {
+        switch (modelName) {
             case 'googleai/gemini-pro':
-                response = await proPrompt(promptInput, { model: 'googleai/gemini-pro' });
+                response = await proPrompt(promptInput, { model });
                 break;
             case 'googleai/gemini-1.5-pro-latest':
-                response = await pro15Prompt(promptInput, { model: 'googleai/gemini-1.5-pro-latest' });
+                response = await pro15Prompt(promptInput, { model });
                 break;
             case 'googleai/gemini-1.5-flash-latest':
             default:
-                response = await flashPrompt(promptInput, { model: 'googleai/gemini-1.5-flash-latest' });
+                response = await flashPrompt(promptInput, { model });
                 break;
         }
         
-        return response.output!;
+        if (!response.output) {
+            throw new Error('The AI model returned an empty response.');
+        }
+        return response.output;
 
     } catch (error: any) {
-      console.error(`Model ${model} failed.`, error);
+      console.error(`Model ${modelName} failed.`, error);
       throw new Error(
-        `The selected AI model (${model}) failed to respond. Please try a different model or try again later.`
+        `The selected AI model (${modelName}) failed to respond. Details: ${error.message}`
       );
     }
   }
