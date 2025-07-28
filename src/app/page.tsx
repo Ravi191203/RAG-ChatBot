@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { KnowledgePanel } from "@/components/knowledge-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
-import { Bot, MessageSquare, Save } from 'lucide-react';
+import { Bot, MessageSquare, Save, Sparkles } from 'lucide-react';
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -71,6 +71,7 @@ export default function Home() {
         sessionStorage.setItem("knowledgeBase", extracted);
         // Clear previous chat messages when new knowledge is extracted
         sessionStorage.removeItem("chatMessages");
+        sessionStorage.removeItem("globalChatMessages");
       }
       
       toast({
@@ -103,6 +104,7 @@ export default function Home() {
      if (typeof window !== 'undefined') {
         sessionStorage.setItem("knowledgeBase", content);
         sessionStorage.removeItem("chatMessages");
+        sessionStorage.removeItem("globalChatMessages");
       }
     toast({
         title: "Success",
@@ -132,10 +134,16 @@ export default function Home() {
                     Saved
                 </Link>
             </Button>
+             <Button variant="outline" size="sm" asChild>
+              <Link href="/global-ai">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Global AI
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" asChild disabled={!knowledge}>
               <Link href="/chat">
                 <MessageSquare className="mr-2 h-4 w-4" />
-                Chat
+                Contextual Chat
               </Link>
             </Button>
         </div>

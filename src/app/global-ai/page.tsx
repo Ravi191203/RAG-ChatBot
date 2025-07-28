@@ -28,8 +28,7 @@ const getSessionId = () => {
 }
 
 
-export default function ChatPage() {
-  const [knowledge, setKnowledge] = useState<string>("");
+export default function GlobalAiPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -41,27 +40,16 @@ export default function ChatPage() {
     setSessionId(id);
     
     // Load state from session storage
-    const storedKnowledge = sessionStorage.getItem("knowledgeBase");
-    if (storedKnowledge) {
-      setKnowledge(storedKnowledge);
-    } else {
-        toast({
-            title: "No Knowledge Base",
-            description: "Please provide a document on the home page first.",
-            variant: "destructive",
-        })
-    }
-
-    const storedMessages = sessionStorage.getItem("chatMessages");
+    const storedMessages = sessionStorage.getItem("globalChatMessages");
     if (storedMessages) {
         setMessages(JSON.parse(storedMessages));
     }
-  }, [toast]);
+  }, []);
 
   // Persist messages to session storage whenever they change
   useEffect(() => {
     if (messages.length > 0) {
-      sessionStorage.setItem("chatMessages", JSON.stringify(messages));
+      sessionStorage.setItem("globalChatMessages", JSON.stringify(messages));
     }
   }, [messages]);
 
@@ -86,7 +74,8 @@ export default function ChatPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ knowledge, sessionId, history: newMessages, question, model: selectedModel }),
+        // We pass `knowledge: ""` to signal to the API this is a general chat
+        body: JSON.stringify({ knowledge: "", sessionId, history: newMessages, question, model: selectedModel }),
       });
 
       if (!response.ok) {
@@ -137,9 +126,9 @@ export default function ChatPage() {
                 </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/global-ai">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Global AI
+              <Link href="/chat">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Contextual Chat
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
@@ -156,12 +145,11 @@ export default function ChatPage() {
               messages={messages}
               onSendMessage={handleSendMessage}
               isResponding={isResponding}
-              knowledge={knowledge}
               onMessageSaved={onMessageSaved}
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}
-              title="Contextual Chat"
-              description="Ask questions about the provided context."
+              title="Global AI Chat"
+              description="Ask me anything! I'm here to help with any topic."
             />
         </div>
       </main>

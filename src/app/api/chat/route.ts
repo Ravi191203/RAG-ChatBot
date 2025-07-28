@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
     }
 
     let dbKnowledge = "";
-    if (process.env.MONGODB_URI) {
+    // Only fetch DB knowledge if session knowledge is also provided (i.e., for contextual chat)
+    if (knowledge && process.env.MONGODB_URI) {
         try {
             const { db } = await connectToDatabase();
             const lastKnowledge = await db.collection('knowledge_base').findOne(
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     // Combine session knowledge with DB knowledge
     const combinedKnowledge = [knowledge, dbKnowledge].filter(Boolean).join('\n\n---\n\n');
 
-    // Construct the context from the knowledge base and all messages EXCEPT the last one (the question)
+    // Construct the context from the knowledge base (if any) and all messages EXCEPT the last one (the question)
     const context =
       (combinedKnowledge ? `--- Knowledge Base ---\n${combinedKnowledge}\n\n` : '') +
       '--- Chat History ---\n' +

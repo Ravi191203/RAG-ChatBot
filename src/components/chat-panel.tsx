@@ -30,10 +30,12 @@ type Props = {
   messages: ChatMessageType[];
   onSendMessage: (question: string) => Promise<void>;
   isResponding: boolean;
-  knowledge: string;
+  knowledge?: string; // Optional for global chat
   onMessageSaved: () => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  title: string;
+  description: string;
 };
 
 export function ChatPanel({
@@ -43,7 +45,9 @@ export function ChatPanel({
   knowledge,
   onMessageSaved,
   selectedModel,
-  onModelChange
+  onModelChange,
+  title,
+  description
 }: Props) {
   const [input, setInput] = useState("");
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
@@ -60,8 +64,10 @@ export function ChatPanel({
     onSendMessage(input);
     setInput("");
   };
+  
+  // Disable chat if responding. If knowledge is provided, also check for its presence.
+  const isChatDisabled = knowledge !== undefined ? (!knowledge || isResponding) : isResponding;
 
-  const isChatDisabled = !knowledge || isResponding;
   const geminiModels = [
     { value: "googleai/gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast)" },
     { value: "googleai/gemini-pro", label: "Gemini Pro (Balanced)" },
@@ -73,8 +79,8 @@ export function ChatPanel({
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
-                <CardTitle className="font-headline">Chat</CardTitle>
-                <CardDescription>Ask questions about the provided context.</CardDescription>
+                <CardTitle className="font-headline">{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
             </div>
             <Select value={selectedModel} onValueChange={onModelChange} disabled={isResponding}>
                 <SelectTrigger className="w-[200px]">
@@ -97,9 +103,9 @@ export function ChatPanel({
               {messages.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
                   <p className="text-center text-muted-foreground">
-                    {knowledge
-                      ? "Ask a question to get started."
-                      : "First, provide a document and extract knowledge."}
+                    { isChatDisabled && knowledge !== undefined
+                      ? "First, provide a document and extract knowledge."
+                      : "Ask a question to get started."}
                   </p>
                 </div>
               ) : (
@@ -121,7 +127,7 @@ export function ChatPanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={
-              isChatDisabled
+              isChatDisabled && knowledge !== undefined
                 ? "Waiting for knowledge base..."
                 : "Type your question..."
             }

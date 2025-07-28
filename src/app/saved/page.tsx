@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { SavedItemsPanel, SavedItem } from "@/components/saved-items-panel";
-import { Bot, Home, MessageSquare } from "lucide-react";
+import { Bot, Home, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -53,9 +53,15 @@ export default function SavedPage() {
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
+                        <Link href="/global-ai">
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Global AI
+                        </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
                         <Link href="/chat">
                             <MessageSquare className="mr-2 h-4 w-4" />
-                            Chat
+                            Contextual Chat
                         </Link>
                     </Button>
                 </div>
