@@ -129,12 +129,12 @@ export default function ChatPage() {
       console.error(error);
       const errorMessage: ChatMessage = {
         role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
+        content: `Sorry, I encountered an error. Please try again. \n\n**Error Details:**\n\`\`\`\n${error.message}\n\`\`\``,
       };
       setMessages((prev) => [...prev, errorMessage]);
       toast({
         title: "Response Failed",
-        description: "Could not get a response. Please try again.",
+        description: "Could not get a response. Please check the error details in the chat.",
         variant: "destructive",
       });
     } finally {
