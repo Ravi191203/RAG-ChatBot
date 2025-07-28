@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatPanel } from "@/components/chat-panel";
-import { Bot, Home, LogOut, MessageSquare, Save } from 'lucide-react';
+import { Bot, Home, LogOut, MessageSquare, Save, Wand2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -176,6 +176,12 @@ export default function GlobalAiPage() {
                         <Save className="mr-0 h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Saved</span>
                     </Link>
+                </Button>
+                 <Button variant="outline" size="sm" asChild>
+                  <Link href="/tools">
+                    <Wand2 className="mr-0 h-4 w-4 sm:mr-2" />
+                     <span className="hidden sm:inline">AI Tools</span>
+                  </Link>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/chat">

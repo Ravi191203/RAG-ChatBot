@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { SavedItemsPanel, SavedItem } from "@/components/saved-items-panel";
-import { Bot, Home, LogOut, MessageSquare, Sparkles } from "lucide-react";
+import { Bot, Home, LogOut, MessageSquare, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +72,12 @@ export default function SavedPage() {
                             <Link href="/">
                                 <Home className="mr-0 h-4 w-4 sm:mr-2" />
                                 <span className="hidden sm:inline">Home</span>
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href="/tools">
+                                <Wand2 className="mr-0 h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">AI Tools</span>
                             </Link>
                         </Button>
                         <Button variant="outline" size="sm" asChild>

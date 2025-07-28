@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { KnowledgePanel } from "@/components/knowledge-panel";
 import { extractKnowledge } from "@/ai/flows/knowledge-extraction";
-import { Bot, MessageSquare, Save, Sparkles, LogOut } from 'lucide-react';
+import { Bot, MessageSquare, Save, Sparkles, LogOut, Wand2 } from 'lucide-react';
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -146,6 +146,12 @@ export default function Home() {
                     <Link href="/saved">
                         <Save className="mr-0 h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Saved</span>
+                    </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                    <Link href="/tools">
+                        <Wand2 className="mr-0 h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">AI Tools</span>
                     </Link>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
