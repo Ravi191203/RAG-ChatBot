@@ -45,6 +45,7 @@ import html2canvas from 'html2canvas';
 
 export type SavedItem = {
     _id: string;
+    title: string;
     content: string;
     type: 'knowledge' | 'chat_message';
     createdAt: string;
@@ -134,10 +135,17 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
 
     setIsCapturing(id);
     try {
+        // Temporarily remove hover effects for capture
+        const buttons = cardElement.querySelector('.absolute.top-2.right-2');
+        buttons?.classList.add('opacity-0');
+
         const canvas = await html2canvas(cardElement, {
             useCORS: true,
             backgroundColor: null, 
         });
+        
+        buttons?.classList.remove('opacity-0');
+
         const dataUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = dataUrl;
@@ -167,7 +175,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${item.type}-${item._id}.txt`;
+      link.download = `${item.title.replace(/ /g, '_')}-${item._id}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -211,57 +219,58 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
 
   const SavedItemCard = ({ item, index }: { item: SavedItem, index: number }) => (
     <div key={item._id} ref={el => cardRefs.current[index] = el} className="p-4 rounded-md border bg-background relative group">
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleShare(item._id)}>
-            <Share2 className="h-4 w-4" />
-            <span className="sr-only">Share</span>
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownloadTxt(item)}>
-          <FileText className="h-4 w-4" />
-          <span className="sr-only">Download as TXT</span>
-        </Button>
-         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCapture(item._id, index)} disabled={!!isCapturing}>
-          {isCapturing === item._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-          <span className="sr-only">Capture</span>
-        </Button>
-        <Dialog open={isEditDialogOpen && editingItemId === item._id} onOpenChange={(open) => { if (!open) setIsEditDialogOpen(false)}}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(item)}>
-              <Pencil className="h-4 w-4" />
-              <span className="sr-only">Edit</span>
+        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleShare(item._id)}>
+                <Share2 className="h-4 w-4" />
+                <span className="sr-only">Share</span>
             </Button>
-          </DialogTrigger>
-        </Dialog>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive">
-               {isDeleting === item._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-               <span className="sr-only">Delete</span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownloadTxt(item)}>
+            <FileText className="h-4 w-4" />
+            <span className="sr-only">Download as TXT</span>
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete this item.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDelete(item._id)} disabled={!!isDeleting}>
-                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-      <p className="text-xs text-muted-foreground mb-2">Saved on: {format(new Date(item.createdAt), "PPP p")}</p>
-      <div className="prose prose-sm dark:prose-invert max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock }}>
-              {item.content}
-          </ReactMarkdown>
-      </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCapture(item._id, index)} disabled={!!isCapturing}>
+            {isCapturing === item._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+            <span className="sr-only">Capture</span>
+            </Button>
+            <Dialog open={isEditDialogOpen && editingItemId === item._id} onOpenChange={(open) => { if (!open) setIsEditDialogOpen(false)}}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(item)}>
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Edit</span>
+                </Button>
+            </DialogTrigger>
+            </Dialog>
+            <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive">
+                {isDeleting === item._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                <span className="sr-only">Delete</span>
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete this item.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => handleDelete(item._id)} disabled={!!isDeleting}>
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Delete
+                </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+            </AlertDialog>
+        </div>
+        <h4 className="font-semibold text-card-foreground truncate pr-28">{item.title || "Untitled"}</h4>
+        <p className="text-xs text-muted-foreground mb-2">Saved on: {format(new Date(item.createdAt), "PPP p")}</p>
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock }}>
+                {item.content}
+            </ReactMarkdown>
+        </div>
     </div>
   );
 
@@ -311,7 +320,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
          <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Item</DialogTitle>
-              <DialogDescription>Make changes to your saved item below.</DialogDescription>
+              <DialogDescription>Make changes to your saved item below. The title will be re-generated automatically.</DialogDescription>
             </DialogHeader>
             <Textarea 
               value={editingContent}

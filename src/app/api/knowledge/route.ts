@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { generateTitle } from '@/ai/flows/title-generation';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,10 +14,15 @@ export async function POST(req: NextRequest) {
     if (!process.env.MONGODB_URI) {
         return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
+    
+    // Generate a title for the content
+    const titleResponse = await generateTitle({ content: knowledge });
+    const title = titleResponse.title;
 
     const { db } = await connectToDatabase();
     
     const result = await db.collection('knowledge_base').insertOne({
+      title: title,
       content: knowledge,
       type: type || 'knowledge', // Default to 'knowledge' for backward compatibility
       createdAt: new Date(),
@@ -118,11 +124,15 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
         }
 
+        // Generate a new title for the updated content
+        const titleResponse = await generateTitle({ content: content });
+        const title = titleResponse.title;
+
         const { db } = await connectToDatabase();
         
         const result = await db.collection('knowledge_base').updateOne(
             { _id: new ObjectId(id) },
-            { $set: { content: content, updatedAt: new Date() } }
+            { $set: { title: title, content: content, updatedAt: new Date() } }
         );
 
         if (result.matchedCount === 0) {

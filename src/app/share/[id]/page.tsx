@@ -59,16 +59,18 @@ export default function SharePage() {
         <div className="flex flex-col min-h-screen items-center justify-center bg-background text-foreground p-4 sm:p-6 md:p-8">
             <Card className="w-full max-w-2xl">
                 <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle className="font-headline">Shared Item</CardTitle>
-                        <Button variant="outline" size="sm" onClick={() => router.back()}>
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back
+                    <div className="flex justify-between items-start">
+                        <div className='max-w-[90%]'>
+                            <CardTitle className="font-headline">{item?.title || 'Shared Item'}</CardTitle>
+                            <CardDescription>
+                                This is a shared item from Contextual Companion.
+                            </CardDescription>
+                        </div>
+                        <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => router.back()}>
+                            <ArrowLeft className="h-4 w-4" />
+                            <span className="sr-only">Back</span>
                         </Button>
                     </div>
-                     <CardDescription>
-                        This is a shared item from Contextual Companion.
-                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isLoading && <p className="text-muted-foreground">Loading...</p>}
