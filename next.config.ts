@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: [
     'https://*.cloudworkstations.dev',
+    'https://*.firebaseapp.com',
   ],
 };
 
