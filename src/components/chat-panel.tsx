@@ -159,7 +159,7 @@ export function ChatPanel({
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-0">
+      <CardContent className="flex-1 p-0">
         <ScrollArea className="h-full">
           <ScrollAreaViewport ref={scrollAreaViewportRef} className="h-full">
             <div className="space-y-6 p-4 sm:p-6">
