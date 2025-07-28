@@ -139,8 +139,7 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, errorMessage]);
       toast({
         title: "Response Failed",
-        description:
-          "Could not get a response. Please check the error details in the chat.",
+        description: `Could not get a response. Details: ${error.message}`,
         variant: "destructive",
       });
     } finally {
