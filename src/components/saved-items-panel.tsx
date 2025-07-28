@@ -232,7 +232,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
             </TabsList>
             
             <TabsContent value="knowledge" className="flex-1 m-0">
-               <ScrollArea className="h-72 rounded-md border bg-muted/50">
+               <ScrollArea className="h-[40vh] md:h-72 rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
                       {savedKnowledge.length > 0 ? savedKnowledge.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={index}/>
@@ -243,7 +243,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
               </ScrollArea>
             </TabsContent>
              <TabsContent value="chats" className="flex-1 m-0">
-               <ScrollArea className="h-72 rounded-md border bg-muted/50">
+               <ScrollArea className="h-[40vh] md:h-72 rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
                       {savedChats.length > 0 ? savedChats.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={savedKnowledge.length + index} />
