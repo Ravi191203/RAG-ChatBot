@@ -201,20 +201,40 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
            <TabsContent value="direct" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
             <form onSubmit={handleDirectChatSubmit} className="flex flex-1 flex-col gap-4">
               <div className="flex-1 flex flex-col gap-4">
-                <Textarea
+                 <Textarea
                   value={content}
                   onChange={(e) => {
                     setContent(e.target.value);
                     setFileName("");
                   }}
-                  placeholder="Paste raw text here to use it directly as context in the chat..."
-                  className="flex-1 min-h-[150px] sm:min-h-0"
+                  placeholder="Paste raw text here to use it directly as context..."
+                  className="flex-1 min-h-[100px] sm:min-h-0"
                   disabled={isExtracting}
                 />
+                <div className="text-center text-sm text-muted-foreground">or</div>
+                 <div 
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                  onClick={() => document.getElementById('direct-file-input')?.click()}
+                  className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors min-h-[100px] sm:min-h-0"
+                >
+                  <FileUp className="h-8 w-8 text-muted-foreground" />
+                  <p className="mt-2 text-muted-foreground">
+                    {fileName ? fileName : 'Upload a .txt or .md file'}
+                  </p>
+                  <input 
+                    id="direct-file-input" 
+                    type="file" 
+                    className="hidden" 
+                    onChange={handleFilePicker}
+                    accept=".txt,.md"
+                    disabled={isExtracting}
+                  />
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
                   <MessageSquareText className="mr-2 h-4 w-4" />
-                  Start Chat with this Text
+                  Start Chat with Content
               </Button>
             </form>
           </TabsContent>
