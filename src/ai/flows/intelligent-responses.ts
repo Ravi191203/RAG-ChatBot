@@ -35,7 +35,16 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const systemPrompt = `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
+const intelligentResponseFlow = ai.defineFlow(
+  {
+    name: 'intelligentResponseFlow',
+    inputSchema: IntelligentResponseInputSchema,
+    outputSchema: IntelligentResponseOutputSchema,
+  },
+  async (input) => {
+    const model = (input.model || 'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
+
+    const prompt = `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 Analyze the context and chat history below, then answer the user's question.
 
@@ -44,29 +53,18 @@ Analyze the context and chat history below, then answer the user's question.
 - Do not mention that you cannot access the internet. Instead, answer based on the information you were trained on.
 - If the question is ambiguous, ask for clarification.
 
-Your final output should be only the answer to the user's question, without any preamble or extra formatting.`;
+Your final output should be only the answer to the user's question, without any preamble or extra formatting.
 
-const intelligentResponseFlow = ai.defineFlow(
-  {
-    name: 'intelligentResponseFlow',
-    inputSchema: IntelligentResponseInputSchema,
-    outputSchema: IntelligentResponseOutputSchema,
-  },
-  async input => {
-    const model = (input.model ||
-      'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
-    
-    const prompt = `--- Context & History ---
+--- Context & History ---
 ${input.context}
 -------------------------
 
 User Question: ${input.question}`;
 
     try {
-      const {text} = await ai.generate({
+      const { text } = await ai.generate({
         model: model,
         prompt: prompt,
-        system: systemPrompt,
       });
 
       return { answer: text };
@@ -74,7 +72,7 @@ User Question: ${input.question}`;
     } catch (error: any) {
       console.error(`Model ${input.model || 'default'} failed.`, error);
       throw new Error(
-        `The selected AI model (${input.model || 'default'}) failed to respond. Please try a different model or try again later. Details: ${error.message}`
+        `The selected AI model (${input.model || 'default'}) failed to respond. Please try a different model or try again later.`
       );
     }
   }
