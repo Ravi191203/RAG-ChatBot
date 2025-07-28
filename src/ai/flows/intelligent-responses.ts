@@ -32,9 +32,9 @@ export type IntelligentResponseOutput = z.infer<
 
 export async function intelligentResponse(
   input: IntelligentResponseInput
-): Promise<ReadableStream<any>> {
-  const stream = await intelligentResponseFlow(input);
-  return streamToReadableStream(stream.stream());
+): Promise<ReadableStream> {
+  const {stream} = await intelligentResponseFlow(input);
+  return streamToReadableStream(stream);
 }
 
 const intelligentResponseFlow = ai.defineFlow(
@@ -49,9 +49,8 @@ const intelligentResponseFlow = ai.defineFlow(
     try {
         const model = googleAI.model(modelName);
 
-        const result = await ai.generate({
+        const { stream, response } = ai.generateStream({
             model,
-            stream: true,
             prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
@@ -69,7 +68,7 @@ ${input.question}
 `,
         });
 
-        return result;
+        return { stream, response };
     } catch (error: any) {
         console.error(`Model ${modelName} failed.`, error);
         throw new Error(
