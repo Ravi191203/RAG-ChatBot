@@ -24,7 +24,7 @@ export type ClassifyImageInput = z.infer<typeof ClassifyImageInputSchema>;
 
 const ClassifyImageOutputSchema = z.object({
   classification: z.string().describe('The most specific classification for the main subject of the image (e.g., "Golden Retriever", "Eiffel Tower").'),
-  description: z.string().describe('A brief, one-paragraph description of the image content.'),
+  description: z.string().describe('A detailed, step-by-step description of the image, covering the subject, setting, colors, and any actions.'),
   extractedText: z.string().optional().describe('Any and all text found within the image. If no text is present, this should be an empty string or omitted.'),
 });
 export type ClassifyImageOutput = z.infer<typeof ClassifyImageOutputSchema>;
@@ -39,10 +39,13 @@ const prompt = ai.definePrompt({
   name: 'classifyImagePrompt',
   input: { schema: ClassifyImageInputSchema },
   output: { schema: ClassifyImageOutputSchema },
-  prompt: `Analyze the following image. Your task is to do three things:
-1.  Identify its main subject and provide the most specific classification possible.
-2.  Write a brief, one-paragraph description of the entire image.
-3.  Extract any and all text present in the image. If there is no text, return an empty string for the extractedText field.
+  prompt: `You are an expert image analyst. Analyze the following image in detail. Your task is to provide a comprehensive, step-by-step breakdown of its contents.
+
+1.  **Classification**: Identify the main subject of the image. Be as specific as possible (e.g., "A red 1967 Ford Mustang convertible" instead of just "car").
+2.  **Step-by-Step Description**: Provide a detailed, multi-step description of the entire image. Break down the scene, objects, and any actions taking place. Describe the setting, background, foreground, colors, and lighting.
+3.  **Text Extraction**: Extract any and all text visible within the image. If no text is present, return an empty string for the extractedText field.
+
+Your response must follow the structured output format.
 
 Image: {{media url=imageDataUri}}`,
   model: 'googleai/gemini-1.5-flash-latest',
