@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -21,6 +22,7 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: [
     'https://*.cloudworkstations.dev',
+    'https://*-firebase-studio-*.cluster-*.cloudworkstations.dev',
     'https://*.firebaseapp.com',
     'https://*.vercel.app',
   ],
