@@ -134,12 +134,12 @@ export function ChatPanel({
                 <CardTitle className="font-headline">{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
                 <Button
                     variant="outline"
-                    size="sm"
                     onClick={handleSaveChat}
                     disabled={isSavingChat || messages.length === 0}
+                    className="w-full sm:w-auto"
                     >
                     {isSavingChat ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Save Chat
