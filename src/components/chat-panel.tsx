@@ -127,8 +127,8 @@ export function ChatPanel({
   ];
 
   return (
-    <Card className="flex h-full flex-col">
-      <CardHeader>
+    <Card className="flex h-full flex-col border-0 shadow-none bg-transparent">
+       <CardHeader className="border-b">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div className="flex-1">
                 <CardTitle className="font-headline">{title}</CardTitle>
@@ -159,10 +159,10 @@ export function ChatPanel({
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      <CardContent className="flex-1 overflow-hidden p-0">
         <ScrollArea className="h-full">
           <ScrollAreaViewport ref={scrollAreaViewportRef} className="h-full">
-            <div className="space-y-6 pr-4">
+            <div className="space-y-6 p-4 sm:p-6">
               {messages.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
                   <p className="text-center text-muted-foreground">
@@ -187,7 +187,7 @@ export function ChatPanel({
           </ScrollAreaViewport>
         </ScrollArea>
       </CardContent>
-      <CardFooter className="pt-4 border-t">
+       <CardFooter className="pt-4 border-t bg-background/95 backdrop-blur-sm">
          <div className="flex w-full items-center space-x-2">
             {isResponding ? (
                  <Button
