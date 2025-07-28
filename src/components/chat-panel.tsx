@@ -70,6 +70,8 @@ export function ChatPanel({
 
   const geminiModels = [
     { value: "googleai/gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast)" },
+    { value: "googleai/gemini-pro", label: "Gemini Pro (Balanced)" },
+    { value: "googleai/gemini-1.5-pro-latest", label: "Gemini 1.5 Pro (Powerful)" },
   ];
 
   return (
