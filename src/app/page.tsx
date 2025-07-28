@@ -86,7 +86,7 @@ export default function Home() {
       let extracted = result.extractedKnowledge;
 
       if (result.apiKeyUsed === 'backup') {
-          extracted += "\n\n*<small>(Powered by backup API key)</small>*";
+          extracted += "\n\n*(Powered by backup API key)*";
       }
 
       setKnowledge(extracted);

@@ -332,7 +332,7 @@ export default function AiToolsPage() {
                                 <div className="flex flex-col items-center gap-4">
                                 <img src={generatedImageUrl} alt="Generated" className="rounded-lg max-w-full max-h-[400px]"/>
                                  <div className="flex items-center gap-4">
-                                    {imageApiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">(Using backup API key)</p>}
+                                    {imageApiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">*(Powered by backup API key)*</p>}
                                     <Button asChild variant="outline">
                                         <a href={generatedImageUrl} download="generated-image.png">
                                             <Download className="mr-2 h-4 w-4" /> Download Image
@@ -368,7 +368,7 @@ export default function AiToolsPage() {
                                     <div className="flex flex-col items-center gap-4">
                                     <video controls src={generatedVideoUrl} className="rounded-lg max-w-full max-h-[400px]" />
                                      <div className="flex items-center gap-4">
-                                         {videoApiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">(Using backup API key)</p>}
+                                         {videoApiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">*(Powered by backup API key)*</p>}
                                         <Button asChild variant="outline">
                                             <a href={generatedVideoUrl} download="generated-video.mp4">
                                                 <Download className="mr-2 h-4 w-4" /> Download Video
@@ -416,7 +416,7 @@ export default function AiToolsPage() {
                                 <Card className="w-full bg-background">
                                     <CardHeader>
                                         <CardTitle className="text-lg">{classificationResult.classification}</CardTitle>
-                                        {classificationResult.apiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">(Powered by backup API key)</p>}
+                                        {classificationResult.apiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">*(Powered by backup API key)*</p>}
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <p className="text-sm text-foreground/80">{classificationResult.description}</p>

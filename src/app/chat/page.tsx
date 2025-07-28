@@ -91,14 +91,12 @@ export default function ChatPage() {
     ];
     setMessages(newMessages);
     setIsResponding(true);
-    let response;
-    let result;
     
     try {
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      response = await fetch('/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +112,7 @@ export default function ChatPage() {
         signal: controller.signal,
       });
 
-      result = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || 'API request failed');
@@ -122,7 +120,7 @@ export default function ChatPage() {
       
       let answer = result.answer;
       if (result.apiKeyUsed === 'backup') {
-          answer += "\n\n*<small>(Powered by backup API key)</small>*";
+          answer += "\n\n*(Powered by backup API key)*";
       }
 
       setMessages((prevMessages) => [
