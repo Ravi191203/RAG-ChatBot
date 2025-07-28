@@ -51,8 +51,7 @@ const intelligentResponseFlow = ai.defineFlow(
             output: {
                 schema: IntelligentResponseOutputSchema,
             },
-            prompt: {
-                system: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
+            prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
 - If the context does not contain the answer, use your own extensive general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
@@ -60,12 +59,13 @@ const intelligentResponseFlow = ai.defineFlow(
 - If the question is ambiguous, ask for clarification.
 
 Your final output should be only the answer to the user's question, without any preamble or extra formatting.
+
+Context:
+${input.context}
+
+Question:
+${input.question}
 `,
-                input: {
-                    context: input.context,
-                    question: input.question,
-                },
-            },
         });
         
         const output = result.output;
