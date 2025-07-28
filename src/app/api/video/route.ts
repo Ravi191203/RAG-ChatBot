@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { generateVideo, checkVideoStatus } from '@/ai/flows/video-generation';
 

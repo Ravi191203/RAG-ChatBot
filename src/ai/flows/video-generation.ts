@@ -28,6 +28,7 @@ const GenerateVideoOutputSchema = z.object({
   done: z.boolean().describe('Whether the operation is complete.'),
   videoUrl: z.string().optional().describe("The generated video as a base64-encoded data URI."),
   error: z.string().optional().describe("Any error message if the operation failed."),
+  apiKeyUsed: z.string().optional().describe('The API key that was used for the response (primary or backup).')
 });
 export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
 
@@ -69,12 +70,14 @@ const generateVideoFlow = ai.defineFlow(
     async (input) => {
         logger.info("Starting video generation flow for prompt:", input.prompt);
         let operation;
+        let apiKeyUsed = 'primary';
         try {
             operation = await startVideoGenerationRequest(process.env.GEMINI_API_KEY, input);
             if (!operation?.name) throw new Error("Primary key failed to start operation.");
         } catch (primaryError: any) {
             logger.warn(`Primary API key failed for video generation. Error: ${primaryError.message}`);
             const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
+            apiKeyUsed = 'backup';
             if (backupApiKey) {
                 logger.log("Attempting to use backup API key for video generation...");
                 try {
@@ -94,7 +97,7 @@ const generateVideoFlow = ai.defineFlow(
         }
 
         logger.info("Video generation operation started:", operation.name);
-        return { operationName: operation.name, done: false };
+        return { operationName: operation.name, done: false, apiKeyUsed };
     }
 );
 
@@ -148,12 +151,14 @@ const checkVideoStatusFlow = ai.defineFlow(
                 // The download URL requires an API key, we can try both here.
                 const fetch = (await import('node-fetch')).default;
                 let videoResponse;
+                let apiKeyUsed = 'primary';
                 try {
                     videoResponse = await fetch(`${video.media.url}&key=${process.env.GEMINI_API_KEY}`);
                     if (!videoResponse.ok) throw new Error('Primary key failed to download video.');
                 } catch (primaryError) {
                      logger.warn(`Primary key failed to download video. Trying backup. Error: ${primaryError}`);
                      const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
+                     apiKeyUsed = 'backup';
                      if (backupApiKey) {
                         videoResponse = await fetch(`${video.media.url}&key=${backupApiKey}`);
                         if (!videoResponse.ok) throw new Error(`Backup key also failed to download video: ${videoResponse.statusText}`);
@@ -173,6 +178,7 @@ const checkVideoStatusFlow = ai.defineFlow(
                 return {
                     done: true,
                     videoUrl: `data:${contentType};base64,${base64Video}`,
+                    apiKeyUsed
                 };
             }
             

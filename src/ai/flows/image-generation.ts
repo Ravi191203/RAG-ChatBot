@@ -20,6 +20,7 @@ export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
 const GenerateImageOutputSchema = z.object({
   imageUrl: z.string().describe("The generated image as a base64-encoded data URI."),
+  apiKeyUsed: z.string().optional().describe('The API key that was used for the response (primary or backup).')
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
@@ -49,12 +50,14 @@ const generateImageFlow = ai.defineFlow(
   },
   async (input) => {
     let media;
+    let apiKeyUsed = 'primary';
     try {
         media = await makeRequest(process.env.GEMINI_API_KEY, input);
         if (!media?.url) throw new Error("Primary key returned empty response.");
     } catch (primaryError: any) {
         console.warn(`Primary API key failed for image generation. Error: ${primaryError.message}`);
         const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
+        apiKeyUsed = 'backup';
         if (backupApiKey) {
             console.log("Attempting to use backup API key for image generation...");
             try {
@@ -75,6 +78,7 @@ const generateImageFlow = ai.defineFlow(
     
     return {
       imageUrl: media.url,
+      apiKeyUsed
     };
   }
 );

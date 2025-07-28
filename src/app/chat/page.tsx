@@ -120,9 +120,14 @@ export default function ChatPage() {
         throw new Error(result.error || 'API request failed');
       }
       
+      let answer = result.answer;
+      if (result.apiKeyUsed === 'backup') {
+          answer += "\n\n*<small>(Powered by backup API key)</small>*";
+      }
+
       setMessages((prevMessages) => [
         ...prevMessages,
-        { role: "assistant", content: result.answer },
+        { role: "assistant", content: answer },
       ]);
 
     } catch (error: any) {

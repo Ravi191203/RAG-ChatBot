@@ -21,6 +21,7 @@ export type GenerateSpeechInput = z.infer<typeof GenerateSpeechInputSchema>;
 
 const GenerateSpeechOutputSchema = z.object({
   audio: z.string().describe("The generated audio as a base64-encoded WAV data URI."),
+  apiKeyUsed: z.string().optional().describe('The API key that was used for the response (primary or backup).')
 });
 export type GenerateSpeechOutput = z.infer<typeof GenerateSpeechOutputSchema>;
 
@@ -79,12 +80,14 @@ const generateSpeechFlow = ai.defineFlow(
   },
   async (input) => {
      let media;
+     let apiKeyUsed = 'primary';
      try {
         media = await makeRequest(process.env.GEMINI_API_KEY, input);
         if (!media) throw new Error("Primary key returned empty response.");
      } catch (primaryError: any) {
         console.warn(`Primary API key failed for TTS generation. Error: ${primaryError.message}`);
         const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
+        apiKeyUsed = 'backup';
         if (backupApiKey) {
             console.log("Attempting to use backup API key for TTS generation...");
             try {
@@ -110,6 +113,7 @@ const generateSpeechFlow = ai.defineFlow(
 
     return {
       audio: 'data:audio/wav;base64,' + wavData,
+      apiKeyUsed
     };
   }
 );

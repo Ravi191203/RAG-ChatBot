@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { generateImage } from '@/ai/flows/image-generation';
 
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
 
         const result = await generateImage({ prompt });
         
-        return NextResponse.json({ imageUrl: result.imageUrl });
+        return NextResponse.json({ imageUrl: result.imageUrl, apiKeyUsed: result.apiKeyUsed });
     } catch (error: any) {
         console.error('Error in Image Generation API:', error);
         return NextResponse.json(

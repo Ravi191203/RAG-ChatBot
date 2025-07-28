@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { generateSpeech } from '@/ai/flows/tts-generation';
 
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
 
         const result = await generateSpeech({ text });
         
-        return NextResponse.json({ audio: result.audio });
+        return NextResponse.json({ audio: result.audio, apiKeyUsed: result.apiKeyUsed });
     } catch (error: any) {
         console.error('Error in TTS API:', error);
         return NextResponse.json(

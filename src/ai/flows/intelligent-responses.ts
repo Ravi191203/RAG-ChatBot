@@ -24,6 +24,7 @@ export type IntelligentResponseInput = z.infer<
 
 const IntelligentResponseOutputSchema = z.object({
   answer: z.string().describe('The answer to the question.'),
+  apiKeyUsed: z.string().optional().describe('The API key that was used for the response (primary or backup).')
 });
 export type IntelligentResponseOutput = z.infer<
   typeof IntelligentResponseOutputSchema
@@ -42,7 +43,7 @@ const makeRequest = async (apiKey: string | undefined, input: IntelligentRespons
     const intelligentResponsePrompt = ai.definePrompt({
       name: 'intelligentResponsePrompt',
       input: {schema: IntelligentResponseInputSchema},
-      output: {schema: IntelligentResponseOutputSchema},
+      output: {schema: IntelligentResponseOutputSchema.omit({apiKeyUsed: true})},
       prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
@@ -78,7 +79,7 @@ const intelligentResponseFlow = ai.defineFlow(
     try {
         // Try with the primary API key from the environment
         const output = await makeRequest(process.env.GEMINI_API_KEY, input);
-        if (output) return output;
+        if (output) return { ...output, apiKeyUsed: 'primary' };
         throw new Error("Primary key returned empty response.");
 
     } catch (primaryError: any) {
@@ -90,7 +91,7 @@ const intelligentResponseFlow = ai.defineFlow(
             console.log("Attempting to use backup API key...");
             try {
                 const output = await makeRequest(backupApiKey, input);
-                if (output) return output;
+                if (output) return { ...output, apiKeyUsed: 'backup' };
                 throw new Error("Backup key returned empty response.");
 
             } catch (backupError: any) {
