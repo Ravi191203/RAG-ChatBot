@@ -12,7 +12,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import {streamToReadableStream} from 'ai';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
@@ -32,16 +31,16 @@ export type IntelligentResponseOutput = z.infer<
 
 export async function intelligentResponse(
   input: IntelligentResponseInput
-): Promise<ReadableStream> {
-  const {stream} = await intelligentResponseFlow(input);
-  return streamToReadableStream(stream);
+): Promise<IntelligentResponseOutput> {
+  return intelligentResponseFlow(input);
 }
+
 
 const intelligentResponseFlow = ai.defineFlow(
   {
     name: 'intelligentResponseFlow',
     inputSchema: IntelligentResponseInputSchema,
-    outputSchema: z.any(),
+    outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
     const modelName = input.model || 'gemini-1.5-flash-latest';
@@ -49,7 +48,7 @@ const intelligentResponseFlow = ai.defineFlow(
     try {
         const model = googleAI.model(modelName);
 
-        const { stream, response } = ai.generateStream({
+        const { output } = await ai.generate({
             model,
             prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
@@ -66,9 +65,13 @@ ${input.context}
 Question:
 ${input.question}
 `,
+            output: {
+                schema: IntelligentResponseOutputSchema,
+            },
         });
 
-        return { stream, response };
+        return output!;
+
     } catch (error: any) {
         console.error(`Model ${modelName} failed.`, error);
         throw new Error(

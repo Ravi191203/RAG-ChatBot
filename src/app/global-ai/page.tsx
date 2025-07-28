@@ -73,9 +73,8 @@ export default function GlobalAiPage() {
       return;
     }
 
-    const currentMessages = [...messages];
     const newMessages: ChatMessage[] = [
-      ...currentMessages,
+      ...messages,
       { role: "user", content: question },
     ];
     setMessages(newMessages);
@@ -93,7 +92,7 @@ export default function GlobalAiPage() {
         body: JSON.stringify({
           knowledge: "", // No knowledge for global AI
           sessionId,
-          history: currentMessages,
+          history: messages,
           question,
           model: selectedModel,
           userId: user.uid,
@@ -106,33 +105,18 @@ export default function GlobalAiPage() {
         throw new Error(errorData.details || 'API request failed');
       }
       
-      if (!response.body) {
-          throw new Error("The response body is empty.");
-      }
-
-      setMessages((prev) => [...prev, {role: 'assistant', content: ''}]);
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        setMessages((prev) => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage.role === 'assistant') {
-                lastMessage.content += chunk;
-                return [...prev.slice(0, -1), lastMessage];
-            }
-            return prev;
-        });
-      }
+      const result = await response.json();
+      
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { role: "assistant", content: result.answer },
+      ]);
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log("Request aborted by user.");
         // Revert the user's message optimistic update
-        setMessages(currentMessages);
+        setMessages(messages);
         return;
       }
       console.error(error);
