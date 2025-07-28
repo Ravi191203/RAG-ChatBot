@@ -47,6 +47,7 @@ Your final output should only be the extracted knowledge, without any preamble o
 Content:
 {{{content}}}
 `,
+    model: 'googleai/gemini-1.5-flash-latest',
 });
 
 
@@ -57,19 +58,15 @@ const extractKnowledgeFlow = ai.defineFlow(
     outputSchema: ExtractKnowledgeOutputSchema,
   },
   async input => {
-    const models = ['googleai/gemini-1.5-flash-latest', 'googleai/gemini-pro'];
-
-    for (const modelName of models) {
-        try {
-            const { output } = await extractKnowledgePrompt(input, { model: modelName });
-            if (output) {
-                return output;
-            }
-        } catch (error) {
-            console.warn(`Model ${modelName} failed. Trying next model.`, error);
+    try {
+        const { output } = await extractKnowledgePrompt(input);
+        if (output) {
+            return output;
         }
+        throw new Error('The AI model returned an empty response.');
+    } catch (error) {
+        console.error(`Knowledge extraction failed.`, error);
+        throw new Error('The AI model failed to process the request.');
     }
-    
-    throw new Error('All AI models failed to process the request.');
   }
 );
