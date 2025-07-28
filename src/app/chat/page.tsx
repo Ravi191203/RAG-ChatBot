@@ -33,6 +33,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState("googleai/gemini-1.5-flash-latest");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function ChatPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ knowledge, sessionId, history: newMessages, question }),
+        body: JSON.stringify({ knowledge, sessionId, history: newMessages, question, model: selectedModel }),
       });
 
       if (!response.ok) {
@@ -151,6 +152,8 @@ export default function ChatPage() {
               isResponding={isResponding}
               knowledge={knowledge}
               onMessageSaved={onMessageSaved}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
             />
         </div>
       </main>

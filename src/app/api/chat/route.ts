@@ -13,7 +13,7 @@ export type ChatMessage = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { knowledge, sessionId, history, question } = await req.json();
+    const { knowledge, sessionId, history, question, model } = await req.json();
 
     if (!history || !question || !sessionId) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         try {
             const { db } = await connectToDatabase();
             const lastKnowledge = await db.collection('knowledge_base').findOne(
-                {},
+                { type: 'knowledge' },
                 { sort: { createdAt: -1 } }
             );
             if (lastKnowledge) {
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
     const result = await intelligentResponse({
       context: context,
       question: question,
+      model: model,
     });
 
     return NextResponse.json({answer: result.answer});

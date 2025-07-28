@@ -17,6 +17,14 @@ import { Loader2, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { TypingIndicator } from "./typing-indicator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 
 type Props = {
   messages: ChatMessageType[];
@@ -24,6 +32,8 @@ type Props = {
   isResponding: boolean;
   knowledge: string;
   onMessageSaved: () => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
 };
 
 export function ChatPanel({
@@ -31,7 +41,9 @@ export function ChatPanel({
   onSendMessage,
   isResponding,
   knowledge,
-  onMessageSaved
+  onMessageSaved,
+  selectedModel,
+  onModelChange
 }: Props) {
   const [input, setInput] = useState("");
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
@@ -50,12 +62,33 @@ export function ChatPanel({
   };
 
   const isChatDisabled = !knowledge || isResponding;
+  const geminiModels = [
+    { value: "googleai/gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast)" },
+    { value: "googleai/gemini-pro", label: "Gemini Pro (Balanced)" },
+    { value: "googleai/gemini-1.5-pro-latest", label: "Gemini 1.5 Pro (Powerful)" },
+  ];
 
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
-        <CardTitle className="font-headline">Chat</CardTitle>
-        <CardDescription>Ask questions about the provided context.</CardDescription>
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle className="font-headline">Chat</CardTitle>
+                <CardDescription>Ask questions about the provided context.</CardDescription>
+            </div>
+            <Select value={selectedModel} onValueChange={onModelChange} disabled={isResponding}>
+                <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent>
+                    {geminiModels.map((model) => (
+                        <SelectItem key={model.value} value={model.value}>
+                            {model.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
