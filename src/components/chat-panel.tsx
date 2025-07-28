@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollAreaViewport } from "@/components/ui/scroll-area";
-import { Loader2, Send, RefreshCw, Square } from "lucide-react";
+import { Loader2, Send, RefreshCw, Square, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { TypingIndicator } from "./typing-indicator";
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast";
 
 
 type Props = {
@@ -55,6 +56,8 @@ export function ChatPanel({
 }: Props) {
   const [input, setInput] = useState("");
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
+  const [isSavingChat, setIsSavingChat] = useState(false);
+  const { toast } = useToast();
 
   const lastMessageIsAssistant = messages.length > 0 && messages[messages.length - 1].role === 'assistant';
 
@@ -70,6 +73,40 @@ export function ChatPanel({
     onSendMessage(input);
     setInput("");
   };
+
+  const handleSaveChat = async () => {
+    setIsSavingChat(true);
+    try {
+        const chatContent = messages.map(m => `**${m.role === 'user' ? 'User' : 'Assistant'}:**\n\n${m.content}`).join('\n\n---\n\n');
+        
+        const response = await fetch('/api/knowledge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ knowledge: chatContent, type: 'chat_session' })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.details || "Failed to save chat session");
+        }
+        
+        toast({
+            title: "Success",
+            description: "Your chat session has been saved.",
+        });
+        onMessageSaved(); // This can trigger a refresh on the saved items page if needed
+    } catch (error) {
+        console.error("Error saving chat:", error);
+        toast({
+            title: "Save Failed",
+            description: "Could not save the chat session.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsSavingChat(false);
+    }
+};
+
   
   // Disable chat if responding. If knowledge is provided, also check for its presence.
   const isInputDisabled = knowledge !== undefined ? (!knowledge || isResponding) : isResponding;
@@ -84,22 +121,33 @@ export function ChatPanel({
     <Card className="flex h-full flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
-            <div>
+            <div className="flex-1">
                 <CardTitle className="font-headline">{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>
             </div>
-            <Select value={selectedModel} onValueChange={onModelChange} disabled={isResponding}>
-                <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select a model" />
-                </SelectTrigger>
-                <SelectContent>
-                    {geminiModels.map((model) => (
-                        <SelectItem key={model.value} value={model.value}>
-                            {model.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSaveChat}
+                    disabled={isSavingChat || messages.length === 0}
+                    >
+                    {isSavingChat ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Chat
+                </Button>
+                <Select value={selectedModel} onValueChange={onModelChange} disabled={isResponding}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {geminiModels.map((model) => (
+                            <SelectItem key={model.value} value={model.value}>
+                                {model.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">

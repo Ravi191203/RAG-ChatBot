@@ -47,7 +47,7 @@ export type SavedItem = {
     _id: string;
     title: string;
     content: string;
-    type: 'knowledge' | 'chat_message';
+    type: 'knowledge' | 'chat_message' | 'chat_session';
     createdAt: string;
 };
 
@@ -69,7 +69,8 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   
   const savedKnowledge = savedItems.filter(item => item.type === 'knowledge');
-  const savedChats = savedItems.filter(item => item.type === 'chat_message');
+  const savedChats = savedItems.filter(item => item.type === 'chat_message' || item.type === 'chat_session');
+
 
   const handleDelete = async (id: string) => {
     setIsDeleting(id);
