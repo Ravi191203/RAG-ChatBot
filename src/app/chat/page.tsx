@@ -85,7 +85,8 @@ export default function ChatPage() {
       return;
     }
     
-    const newMessages: ChatMessage[] = [...messages, { role: "user", content: question }];
+    const currentMessages = [...messages];
+    const newMessages: ChatMessage[] = [...currentMessages, { role: "user", content: question }];
     setMessages(newMessages);
     setIsResponding(true);
 
@@ -101,7 +102,7 @@ export default function ChatPage() {
         body: JSON.stringify({ 
             knowledge, 
             sessionId, 
-            history: newMessages, 
+            history: currentMessages, 
             question, 
             model: selectedModel,
             userId: user.uid 

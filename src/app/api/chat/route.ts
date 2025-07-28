@@ -46,11 +46,11 @@ export async function POST(req: NextRequest) {
     // Combine session knowledge with DB knowledge
     const combinedKnowledge = [knowledge, dbKnowledge].filter(Boolean).join('\n\n---\n\n');
 
-    // Construct the context from the knowledge base (if any) and all messages EXCEPT the last one (the question)
+    // Construct the context from the knowledge base (if any) and the message history
     const context =
       (combinedKnowledge ? `--- Knowledge Base ---\n${combinedKnowledge}\n\n` : '') +
       '--- Chat History ---\n' +
-      history.slice(0, -1).map((h: {role: string; content: string;}) => `${h.role}: ${h.content}`).join('\n');
+      history.map((h: {role: string; content: string;}) => `${h.role}: ${h.content}`).join('\n');
 
     const result = await intelligentResponse({
       context: context,
