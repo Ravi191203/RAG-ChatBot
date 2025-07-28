@@ -35,16 +35,19 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const intelligentResponseFlow = ai.defineFlow(
+const intelligentResponsePrompt = ai.definePrompt(
   {
-    name: 'intelligentResponseFlow',
-    inputSchema: IntelligentResponseInputSchema,
-    outputSchema: IntelligentResponseOutputSchema,
-  },
-  async (input) => {
-    const model = (input.model || 'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
-
-    const prompt = `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
+    name: 'intelligentResponsePrompt',
+    input: {
+        schema: z.object({
+            context: z.string(),
+            question: z.string(),
+        }),
+    },
+    output: {
+        schema: IntelligentResponseOutputSchema
+    },
+    system: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 Analyze the context and chat history below, then answer the user's question.
 
@@ -54,20 +57,30 @@ Analyze the context and chat history below, then answer the user's question.
 - If the question is ambiguous, ask for clarification.
 
 Your final output should be only the answer to the user's question, without any preamble or extra formatting.
-
---- Context & History ---
-${input.context}
+`,
+    prompt: `--- Context & History ---
+{{{context}}}
 -------------------------
 
-User Question: ${input.question}`;
+User Question: {{{question}}}`,
+  },
+);
 
+const intelligentResponseFlow = ai.defineFlow(
+  {
+    name: 'intelligentResponseFlow',
+    inputSchema: IntelligentResponseInputSchema,
+    outputSchema: IntelligentResponseOutputSchema,
+  },
+  async (input) => {
+    const model = (input.model || 'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
+    
     try {
-      const { text } = await ai.generate({
-        model: model,
-        prompt: prompt,
-      });
-
-      return { answer: text };
+        const { output } = await intelligentResponsePrompt(
+            { context: input.context, question: input.question },
+            { model: model }
+        );
+        return output!;
 
     } catch (error: any) {
       console.error(`Model ${input.model || 'default'} failed.`, error);
