@@ -35,11 +35,7 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const intelligentResponsePrompt = ai.definePrompt({
-  name: 'intelligentResponsePrompt',
-  input: {schema: IntelligentResponseInputSchema},
-  output: {schema: IntelligentResponseOutputSchema},
-  prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
+const systemPrompt = `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 Analyze the context and chat history below, then answer the user's question.
 
@@ -48,15 +44,7 @@ Analyze the context and chat history below, then answer the user's question.
 - Do not mention that you cannot access the internet. Instead, answer based on the information you were trained on.
 - If the question is ambiguous, ask for clarification.
 
-Always strive to be helpful and provide a well-reasoned answer.
-
---- Context & History ---
-{{{context}}}
--------------------------
-
-User Question: {{{question}}}
-`,
-});
+Always strive to be helpful and provide a well-reasoned answer.`;
 
 const intelligentResponseFlow = ai.defineFlow(
   {
@@ -67,13 +55,29 @@ const intelligentResponseFlow = ai.defineFlow(
   async input => {
     const model = (input.model ||
       'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
+    
+    const prompt = `--- Context & History ---
+{{{context}}}
+-------------------------
+
+User Question: {{{question}}}`;
 
     try {
-      const {output} = await intelligentResponsePrompt(input, {model});
+      const {output} = await ai.generate({
+        model: model,
+        prompt: prompt,
+        system: systemPrompt,
+        input: {
+            context: input.context,
+            question: input.question,
+        },
+        output: {
+            schema: IntelligentResponseOutputSchema
+        }
+      });
       return output!;
     } catch (error) {
       console.warn(`Model ${input.model} failed.`, error);
-      // Optional: You could implement a fallback to a default model here if needed.
       throw new Error(
         `The selected AI model (${input.model}) failed to respond. Please try a different model or try again later.`
       );

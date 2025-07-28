@@ -32,11 +32,7 @@ export async function extractKnowledge(
   return extractKnowledgeFlow(input);
 }
 
-const primaryPrompt = ai.definePrompt({
-  name: 'extractKnowledgePrimaryPrompt',
-  input: {schema: ExtractKnowledgeInputSchema},
-  output: {schema: ExtractKnowledgeOutputSchema},
-  prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
+const promptText = `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
 
 Instead of just listing key points, I want you to truly understand the text and present your understanding. Your output should be a detailed, well-structured summary that captures the core concepts, key arguments, and any important data or examples. Explain the main ideas in your own words, as if you were creating a study guide for someone who needs to master this information.
 
@@ -45,40 +41,8 @@ If the content is empty, nonsensical, or too brief to analyze, please state that
 Content:
 {{{content}}}
 
-Your Extracted Knowledge:`,
-  model: 'googleai/gemini-1.5-flash-latest',
-  retry: {
-    backoff: {
-      delay: 5000,
-      maxRetries: 5,
-      multiplier: 2,
-    },
-  },
-});
+Your Extracted Knowledge:`;
 
-const fallbackPrompt = ai.definePrompt({
-  name: 'extractKnowledgeFallbackPrompt',
-  input: {schema: ExtractKnowledgeInputSchema},
-  output: {schema: ExtractKnowledgeOutputSchema},
-  prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
-
-Instead of just listing key points, I want you to truly understand the text and present your understanding. Your output should be a detailed, well-structured summary that captures the core concepts, key arguments, and any important data or examples. Explain the main ideas in your own words, as if you were creating a study guide for someone who needs to master this information.
-
-If the content is empty, nonsensical, or too brief to analyze, please state that clearly.
-
-Content:
-{{{content}}}
-
-Your Extracted Knowledge:`,
-  model: 'googleai/gemini-pro',
-  retry: {
-    backoff: {
-      delay: 5000,
-      maxRetries: 5,
-      multiplier: 2,
-    },
-  },
-});
 
 const extractKnowledgeFlow = ai.defineFlow(
   {
@@ -87,13 +51,33 @@ const extractKnowledgeFlow = ai.defineFlow(
     outputSchema: ExtractKnowledgeOutputSchema,
   },
   async input => {
-    try {
-      const {output} = await primaryPrompt(input);
-      return output!;
-    } catch (error) {
-      console.warn('Primary model failed, switching to fallback.', error);
-      const {output} = await fallbackPrompt(input);
-      return output!;
+    const models = ['googleai/gemini-1.5-flash-latest', 'googleai/gemini-pro'];
+
+    for (const modelName of models) {
+        try {
+            const { output } = await ai.generate({
+                model: modelName,
+                prompt: promptText,
+                input: {
+                    content: input.content
+                },
+                output: {
+                    schema: ExtractKnowledgeOutputSchema
+                },
+                retry: {
+                    backoff: {
+                        delay: 5000,
+                        maxRetries: 3,
+                        multiplier: 2,
+                    },
+                },
+            });
+            return output!;
+        } catch (error) {
+            console.warn(`Model ${modelName} failed. Trying next model.`, error);
+        }
     }
+    
+    throw new Error('All AI models failed to process the request.');
   }
 );
