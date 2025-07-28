@@ -52,13 +52,10 @@ Your final output should be only the extracted knowledge, without any preamble o
 Content:
 {{{content}}}
 `,
+      model,
     });
 
-    const { output } = await ai.generate({
-        prompt: extractKnowledgePrompt,
-        model,
-        input
-    });
+    const { output } = await extractKnowledgePrompt(input);
 
     return output;
 }
