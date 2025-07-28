@@ -11,7 +11,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {ModelReference} from 'genkit/model';
 import {googleAI} from '@genkit-ai/googleai';
 
 const IntelligentResponseInputSchema = z.object({
@@ -69,18 +68,13 @@ const intelligentResponseFlow = ai.defineFlow(
   },
   async (input) => {
     const modelName = input.model || 'googleai/gemini-1.5-flash-latest';
-    
-    // Ensure we correctly reference the model
-    const model = googleAI.model(modelName.replace('googleai/', '') as any);
+    const model = googleAI.model(modelName.replace('googleai/', ''));
 
     try {
-        const { output } = await ai.generate({
-            prompt: {
-                ...intelligentResponsePrompt,
-                input: { context: input.context, question: input.question },
-            },
-            model,
-        });
+        const { output } = await intelligentResponsePrompt(
+            { context: input.context, question: input.question },
+            { model }
+        );
         
         if (!output) {
             throw new Error('The AI model returned an empty response.');
