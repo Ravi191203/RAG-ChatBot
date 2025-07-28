@@ -74,9 +74,12 @@ const intelligentResponseFlow = ai.defineFlow(
     const model = googleAI.model(modelName.replace('googleai/', '') as any);
 
     try {
-        const { output } = await intelligentResponsePrompt({
-            input: { context: input.context, question: input.question },
-            model
+        const { output } = await ai.generate({
+            prompt: {
+                ...intelligentResponsePrompt,
+                input: { context: input.context, question: input.question },
+            },
+            model,
         });
         
         if (!output) {
