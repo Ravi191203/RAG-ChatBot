@@ -99,13 +99,10 @@ export default function Home() {
         description: "Knowledge extracted. You can now save it or start a chat.",
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({
-        title: "Extraction Failed",
-        description: "Could not extract knowledge. Please try again.",
-        variant: "destructive",
-      });
+      const errorMessage = `Sorry, knowledge extraction failed. Please try again. \n\n**Error Details:**\n\`\`\`\n${error.message}\n\`\`\``;
+      setKnowledge(errorMessage);
     } finally {
       setIsExtracting(false);
     }
