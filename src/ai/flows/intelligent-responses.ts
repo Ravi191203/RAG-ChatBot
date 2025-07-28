@@ -12,7 +12,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import { configureGenkit } from 'genkit';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
@@ -46,19 +45,9 @@ const intelligentResponseFlow = ai.defineFlow(
     const modelName = input.model || 'googleai/gemini-1.5-flash-latest';
     
     const makeRequest = async (apiKey: string | undefined) => {
-        // Dynamically configure a new Genkit instance with the provided API key
-        const dynamicAi = configureGenkit({
-            plugins: [googleAI({ apiKey })],
-            logLevel: 'silent',
-            telemetry: {
-                instrumentation: 'none',
-                logger: 'none',
-            },
-        });
+        const model = googleAI.model(modelName, { apiKey });
 
-        const model = dynamicAi.model(modelName);
-
-        const result = await dynamicAi.generate({
+        const result = await ai.generate({
             model,
             output: {
                 schema: IntelligentResponseOutputSchema,
