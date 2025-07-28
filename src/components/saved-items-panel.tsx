@@ -15,7 +15,7 @@ import remarkGfm from "remark-gfm";
 import { CodeBlock } from "./code-block";
 import { format } from "date-fns";
 import { Button } from "./ui/button";
-import { Pencil, Trash2, Loader2, Camera } from "lucide-react";
+import { Pencil, Trash2, Loader2, Camera, FileText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -160,6 +160,31 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
         setIsCapturing(null);
     }
   };
+
+  const handleDownloadTxt = (item: SavedItem) => {
+    try {
+      const blob = new Blob([item.content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${item.type}-${item._id}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+       toast({
+        title: 'Success',
+        description: 'Content downloaded as .txt file.',
+      });
+    } catch (error) {
+      console.error("Error downloading text file:", error);
+      toast({
+        title: 'Error',
+        description: 'Could not download file.',
+        variant: 'destructive',
+      });
+    }
+  };
   
   const openEditDialog = (item: SavedItem) => {
     setEditingItemId(item._id);
@@ -170,6 +195,10 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
   const SavedItemCard = ({ item, index }: { item: SavedItem, index: number }) => (
     <div key={item._id} ref={el => cardRefs.current[index] = el} className="p-4 rounded-md border bg-background relative group">
       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownloadTxt(item)}>
+          <FileText className="h-4 w-4" />
+          <span className="sr-only">Download as TXT</span>
+        </Button>
          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCapture(item._id, index)} disabled={!!isCapturing}>
           {isCapturing === item._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
           <span className="sr-only">Capture</span>
@@ -232,7 +261,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
             </TabsList>
             
             <TabsContent value="knowledge" className="flex-1 m-0">
-               <ScrollArea className="h-[40vh] md:h-72 rounded-md border bg-muted/50">
+               <ScrollArea className="h-[calc(100vh-20rem)] md:h-72 rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
                       {savedKnowledge.length > 0 ? savedKnowledge.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={index}/>
@@ -243,7 +272,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
               </ScrollArea>
             </TabsContent>
              <TabsContent value="chats" className="flex-1 m-0">
-               <ScrollArea className="h-[40vh] md:h-72 rounded-md border bg-muted/50">
+               <ScrollArea className="h-[calc(100vh-20rem)] md:h-72 rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
                       {savedChats.length > 0 ? savedChats.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={savedKnowledge.length + index} />
