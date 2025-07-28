@@ -112,12 +112,11 @@ export default function ChatPage() {
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'API request failed');
-      }
-      
       const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'API request failed');
+      }
       
       setMessages((prevMessages) => [
         ...prevMessages,
