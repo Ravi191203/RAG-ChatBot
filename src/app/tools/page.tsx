@@ -172,35 +172,53 @@ export default function AiToolsPage() {
     }
   };
 
+  const readFileAsDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as string);
+        } else {
+          reject(new Error("Failed to read file."));
+        }
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleClassifyImage = async () => {
     if (!classificationFile) {
-        toast({ title: 'No Image', description: 'Please select an image to classify.', variant: 'destructive' });
-        return;
+      toast({ title: 'No Image', description: 'Please select an image to classify.', variant: 'destructive' });
+      return;
     }
+
     setIsClassifying(true);
     setClassificationResult(null);
+
     try {
-        const reader = new FileReader();
-        reader.readAsDataURL(classificationFile);
-        reader.onload = async (event) => {
-            const imageDataUri = event.target?.result as string;
-            const response = await fetch('/api/classify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageDataUri }),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.details || 'Failed to classify image');
-            }
-            const result = await response.json();
-            setClassificationResult(result);
-        };
+      const imageDataUri = await readFileAsDataUri(classificationFile);
+
+      const response = await fetch('/api/classify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageDataUri }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to classify image');
+      }
+
+      const result = await response.json();
+      setClassificationResult(result);
     } catch (error: any) {
-        console.error(error);
-        toast({ title: 'Error', description: `Image classification failed: ${error.message}`, variant: 'destructive' });
+      console.error(error);
+      toast({ title: 'Error', description: `Image classification failed: ${error.message}`, variant: 'destructive' });
     } finally {
-        setIsClassifying(false);
+      setIsClassifying(false);
     }
   };
 
@@ -379,6 +397,7 @@ export default function AiToolsPage() {
                                 <Card className="w-full bg-background">
                                     <CardHeader>
                                         <CardTitle className="text-lg">{classificationResult.classification}</CardTitle>
+
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-sm text-foreground/80">{classificationResult.description}</p>
