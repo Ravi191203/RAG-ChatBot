@@ -36,7 +36,7 @@ export async function intelligentResponse(
 }
 
 const makeRequest = async (apiKey: string | undefined, input: IntelligentResponseInput) => {
-    const modelName = input.model || 'gemini-pro';
+    const modelName = input.model || 'gemini-1.5-flash-latest';
     const model = googleAI.model(modelName, { apiKey });
 
     const { output } = await ai.generate({
@@ -71,7 +71,7 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const modelName = input.model || 'gemini-pro';
+    const modelName = input.model || 'gemini-1.5-flash-latest';
     
     try {
         // Try with the primary API key from the environment
@@ -97,12 +97,15 @@ const intelligentResponseFlow = ai.defineFlow(
                     `The selected AI model (${modelName}) and the backup both failed to respond. Details: ${backupError.message}`
                 );
             }
+        } else {
+             // If no backup key, throw the original error
+            throw new Error(
+                `The selected AI model (${modelName}) failed to respond. Details: ${primaryError.message}`
+            );
         }
-
-        // If no backup key or backup fails, throw the original error
-        throw new Error(
-            `The selected AI model (${modelName}) failed to respond. Details: ${primaryError.message}`
-        );
     }
+    // This line should not be reachable if a response or an error is always returned.
+    // Added to satisfy TypeScript's need for a return statement at the end of the function.
+    throw new Error('No response from AI model after all attempts.');
   }
 );

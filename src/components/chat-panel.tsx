@@ -124,9 +124,9 @@ export function ChatPanel({
   const isInputDisabled = knowledge !== undefined ? (!knowledge || isResponding) : isResponding;
 
   const geminiModels = [
-    { value: "gemini-pro", label: "Gemini Pro" },
     { value: "gemini-1.5-flash-latest", label: "Gemini 1.5 Flash" },
     { value: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro" },
+    { value: "gemini-pro", label: "Gemini Pro" },
   ];
 
   return (
