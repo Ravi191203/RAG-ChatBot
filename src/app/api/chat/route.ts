@@ -2,6 +2,7 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {intelligentResponse} from '@/ai/flows/intelligent-responses';
 import { connectToDatabase } from '@/lib/mongodb';
+import { StreamingTextResponse } from 'ai';
 
 
 export type ChatMessage = {
@@ -52,13 +53,13 @@ export async function POST(req: NextRequest) {
       '--- Chat History ---\n' +
       history.map((h: {role: string; content: string;}) => `${h.role}: ${h.content}`).join('\n');
 
-    const result = await intelligentResponse({
+    const stream = await intelligentResponse({
       context: context,
       question: question,
       model: model,
     });
 
-    return NextResponse.json({answer: result.answer});
+    return new StreamingTextResponse(stream);
   } catch (error: any) {
     console.error('Error in chat API:', error);
     return NextResponse.json(
@@ -67,3 +68,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

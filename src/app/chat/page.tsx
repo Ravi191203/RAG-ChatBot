@@ -84,9 +84,12 @@ export default function ChatPage() {
       });
       return;
     }
-    
+
     const currentMessages = [...messages];
-    const newMessages: ChatMessage[] = [...currentMessages, { role: "user", content: question }];
+    const newMessages: ChatMessage[] = [
+      ...currentMessages,
+      { role: "user", content: question },
+    ];
     setMessages(newMessages);
     setIsResponding(true);
 
@@ -99,13 +102,13 @@ export default function ChatPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-            knowledge, 
-            sessionId, 
-            history: currentMessages, 
-            question, 
-            model: selectedModel,
-            userId: user.uid 
+        body: JSON.stringify({
+          knowledge,
+          sessionId,
+          history: currentMessages,
+          question,
+          model: selectedModel,
+          userId: user.uid,
         }),
         signal: controller.signal,
       });
@@ -114,18 +117,36 @@ export default function ChatPage() {
         const errorData = await response.json();
         throw new Error(errorData.details || 'API request failed');
       }
+      
+      if (!response.body) {
+          throw new Error("The response body is empty.");
+      }
 
-      const result = await response.json();
+      setMessages((prev) => [...prev, {role: 'assistant', content: ''}]);
 
-      const assistantMessage: ChatMessage = { role: "assistant", content: result.answer };
-      setMessages((prev) => [...prev, assistantMessage]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        setMessages((prev) => {
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage.role === 'assistant') {
+                lastMessage.content += chunk;
+                return [...prev.slice(0, -1), lastMessage];
+            }
+            return prev;
+        });
+      }
+
     } catch (error: any) {
-        if (error.name === 'AbortError') {
-            console.log("Request aborted by user.");
-            // Revert the user's message optimistic update
-            setMessages(currentMessages);
-            return;
-        }
+      if (error.name === 'AbortError') {
+        console.log("Request aborted by user.");
+        // Revert the user's message optimistic update
+        setMessages(currentMessages);
+        return;
+      }
       console.error(error);
       const errorMessage: ChatMessage = {
         role: "assistant",
@@ -134,7 +155,8 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, errorMessage]);
       toast({
         title: "Response Failed",
-        description: "Could not get a response. Please check the error details in the chat.",
+        description:
+          "Could not get a response. Please check the error details in the chat.",
         variant: "destructive",
       });
     } finally {
@@ -142,6 +164,7 @@ export default function ChatPage() {
       abortControllerRef.current = null;
     }
   };
+
 
   const handleStopGenerating = () => {
     if (abortControllerRef.current) {
@@ -245,22 +268,22 @@ export default function ChatPage() {
           )}
         </div>
       </header>
-      <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-4xl px-4 py-6">
-              <ChatPanel
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  onRegenerate={handleRegenerateResponse}
-                  isResponding={isResponding}
-                  onStopGenerating={handleStopGenerating}
-                  onMessageSaved={onMessageSaved}
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
-                  knowledge={knowledge}
-                  title="Contextual Chat"
-                  description="Ask questions about the provided context."
-              />
-          </div>
+       <main className="flex-1 overflow-auto">
+        <div className="mx-auto max-w-4xl px-4 py-6">
+          <ChatPanel
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onRegenerate={handleRegenerateResponse}
+            isResponding={isResponding}
+            onStopGenerating={handleStopGenerating}
+            onMessageSaved={onMessageSaved}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            knowledge={knowledge}
+            title="Contextual Chat"
+            description="Ask questions about the provided context."
+          />
+        </div>
       </main>
     </div>
   );

@@ -72,29 +72,31 @@ export default function GlobalAiPage() {
       });
       return;
     }
-    
+
     const currentMessages = [...messages];
-    const newMessages: ChatMessage[] = [...currentMessages, { role: "user", content: question }];
+    const newMessages: ChatMessage[] = [
+      ...currentMessages,
+      { role: "user", content: question },
+    ];
     setMessages(newMessages);
     setIsResponding(true);
 
     try {
-       const controller = new AbortController();
-       abortControllerRef.current = controller;
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
-       const response = await fetch('/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // We pass `knowledge: ""` to signal to the API this is a general chat
-        body: JSON.stringify({ 
-            knowledge: "", 
-            sessionId, 
-            history: currentMessages, 
-            question, 
-            model: selectedModel,
-            userId: user.uid
+        body: JSON.stringify({
+          knowledge: "", // No knowledge for global AI
+          sessionId,
+          history: currentMessages,
+          question,
+          model: selectedModel,
+          userId: user.uid,
         }),
         signal: controller.signal,
       });
@@ -103,18 +105,36 @@ export default function GlobalAiPage() {
         const errorData = await response.json();
         throw new Error(errorData.details || 'API request failed');
       }
+      
+      if (!response.body) {
+          throw new Error("The response body is empty.");
+      }
 
-      const result = await response.json();
+      setMessages((prev) => [...prev, {role: 'assistant', content: ''}]);
 
-      const assistantMessage: ChatMessage = { role: "assistant", content: result.answer };
-      setMessages((prev) => [...prev, assistantMessage]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        setMessages((prev) => {
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage.role === 'assistant') {
+                lastMessage.content += chunk;
+                return [...prev.slice(0, -1), lastMessage];
+            }
+            return prev;
+        });
+      }
+
     } catch (error: any) {
-        if (error.name === 'AbortError') {
-            console.log("Request aborted by user.");
-            // Revert the user's message optimistic update
-            setMessages(currentMessages);
-            return;
-        }
+      if (error.name === 'AbortError') {
+        console.log("Request aborted by user.");
+        // Revert the user's message optimistic update
+        setMessages(currentMessages);
+        return;
+      }
       console.error(error);
       const errorMessage: ChatMessage = {
         role: "assistant",
@@ -123,7 +143,8 @@ export default function GlobalAiPage() {
       setMessages((prev) => [...prev, errorMessage]);
       toast({
         title: "Response Failed",
-        description: "Could not get a response. Please check the error details in the chat.",
+        description:
+          "Could not get a response. Please check the error details in the chat.",
         variant: "destructive",
       });
     } finally {
@@ -131,6 +152,7 @@ export default function GlobalAiPage() {
       abortControllerRef.current = null;
     }
   };
+
 
   const handleStopGenerating = () => {
     if (abortControllerRef.current) {
@@ -143,7 +165,7 @@ export default function GlobalAiPage() {
     const lastUserMessage = messages.findLast((msg) => msg.role === 'user');
     if (!lastUserMessage) return;
 
-    // Remove the last AI response and resubmit the user's prompt
+    // Remove the last assistant response and resubmit the user's prompt
      setMessages((prev) => {
         const lastAiResponseIndex = prev.map(m => m.role).lastIndexOf('assistant');
         if(lastAiResponseIndex > -1) {
@@ -234,7 +256,7 @@ export default function GlobalAiPage() {
           )}
         </div>
       </header>
-       <main className="flex-1 overflow-y-auto">
+       <main className="flex-1 overflow-auto">
           <div className="mx-auto max-w-4xl px-4 py-6">
               <ChatPanel
                   messages={messages}
@@ -253,3 +275,4 @@ export default function GlobalAiPage() {
     </div>
   );
 }
+

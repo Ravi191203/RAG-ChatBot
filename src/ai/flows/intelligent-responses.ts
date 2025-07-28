@@ -12,6 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
+import {streamToReadableStream} from 'ai';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
@@ -31,15 +32,16 @@ export type IntelligentResponseOutput = z.infer<
 
 export async function intelligentResponse(
   input: IntelligentResponseInput
-): Promise<IntelligentResponseOutput> {
-  return intelligentResponseFlow(input);
+): Promise<ReadableStream<any>> {
+  const stream = await intelligentResponseFlow(input);
+  return streamToReadableStream(stream.stream());
 }
 
 const intelligentResponseFlow = ai.defineFlow(
   {
     name: 'intelligentResponseFlow',
     inputSchema: IntelligentResponseInputSchema,
-    outputSchema: IntelligentResponseOutputSchema,
+    outputSchema: z.any(),
   },
   async (input) => {
     const modelName = input.model || 'gemini-1.5-flash-latest';
@@ -49,9 +51,7 @@ const intelligentResponseFlow = ai.defineFlow(
 
         const result = await ai.generate({
             model,
-            output: {
-                schema: IntelligentResponseOutputSchema,
-            },
+            stream: true,
             prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
@@ -69,11 +69,7 @@ ${input.question}
 `,
         });
 
-        const output = result.output;
-        if (!output) {
-            throw new Error('The AI model returned an empty response.');
-        }
-        return output;
+        return result;
     } catch (error: any) {
         console.error(`Model ${modelName} failed.`, error);
         throw new Error(
