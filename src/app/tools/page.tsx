@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Bot, Home, LogOut, Save, Sparkles, Wand2, Image as ImageIcon, Video, Download } from 'lucide-react';
+import { Bot, Home, LogOut, Save, Sparkles, Wand2, Image as ImageIcon, Video, Download, GalleryHorizontal, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,6 +24,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+type ClassificationResult = {
+    classification: string;
+    description: string;
+}
+
 export default function AiToolsPage() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
@@ -39,6 +44,12 @@ export default function AiToolsPage() {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
   const [videoOperationName, setVideoOperationName] = useState<string | null>(null);
   const [videoStatus, setVideoStatus] = useState('');
+
+  // Image Classification State
+  const [classificationFile, setClassificationFile] = useState<File | null>(null);
+  const [classificationPreview, setClassificationPreview] = useState<string>('');
+  const [isClassifying, setIsClassifying] = useState(false);
+  const [classificationResult, setClassificationResult] = useState<ClassificationResult | null>(null);
 
 
   const handleImageGeneration = async () => {
@@ -144,6 +155,55 @@ export default function AiToolsPage() {
     }
   }, [videoOperationName, isGeneratingVideo, toast]);
 
+  const handleClassificationFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        if (!file.type.startsWith('image/')) {
+            toast({ title: 'Invalid File', description: 'Please select an image file.', variant: 'destructive' });
+            return;
+        }
+        setClassificationFile(file);
+        setClassificationResult(null);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setClassificationPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }
+  };
+
+  const handleClassifyImage = async () => {
+    if (!classificationFile) {
+        toast({ title: 'No Image', description: 'Please select an image to classify.', variant: 'destructive' });
+        return;
+    }
+    setIsClassifying(true);
+    setClassificationResult(null);
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(classificationFile);
+        reader.onload = async (event) => {
+            const imageDataUri = event.target?.result as string;
+            const response = await fetch('/api/classify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageDataUri }),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.details || 'Failed to classify image');
+            }
+            const result = await response.json();
+            setClassificationResult(result);
+        };
+    } catch (error: any) {
+        console.error(error);
+        toast({ title: 'Error', description: `Image classification failed: ${error.message}`, variant: 'destructive' });
+    } finally {
+        setIsClassifying(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
@@ -210,13 +270,14 @@ export default function AiToolsPage() {
               <CardTitle className="font-headline flex items-center gap-2">
                 <Wand2 /> AI Creative Tools
               </CardTitle>
-              <CardDescription>Generate images and videos from text prompts using cutting-edge AI models.</CardDescription>
+              <CardDescription>Generate images, videos and classify images using cutting-edge AI models.</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="image">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="image">Image Generation</TabsTrigger>
                   <TabsTrigger value="video">Video Generation</TabsTrigger>
+                  <TabsTrigger value="classify">Image Classification</TabsTrigger>
                 </TabsList>
                 
                 {/* Image Generation Tab */}
@@ -283,6 +344,50 @@ export default function AiToolsPage() {
                             </CardContent>
                         </Card>
                     </div>
+                </TabsContent>
+
+                 {/* Image Classification Tab */}
+                <TabsContent value="classify" className="mt-4">
+                   <div className="flex flex-col gap-4">
+                        <div 
+                            onClick={() => document.getElementById('classify-file-input')?.click()}
+                            className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors min-h-[150px]"
+                            >
+                            <FileUp className="h-10 w-10 text-muted-foreground" />
+                            <p className="mt-4 text-muted-foreground">
+                                {classificationFile ? classificationFile.name : 'Drag & drop an image, or click to select'}
+                            </p>
+                            <input 
+                                id="classify-file-input" 
+                                type="file" 
+                                className="hidden" 
+                                onChange={handleClassificationFileChange}
+                                accept="image/*"
+                                disabled={isClassifying}
+                            />
+                        </div>
+                        <Button onClick={handleClassifyImage} disabled={isClassifying || !classificationFile}>
+                            {isClassifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GalleryHorizontal className="mr-2 h-4 w-4" />}
+                            Classify Image
+                        </Button>
+                        <Card className="mt-4 min-h-[256px] flex flex-col items-center justify-center bg-muted/50 p-4 gap-4">
+                            {classificationPreview && (
+                                <img src={classificationPreview} alt="Preview" className="rounded-lg max-w-full max-h-[300px]"/>
+                            )}
+                            {isClassifying && <div className="flex flex-col items-center gap-2 text-muted-foreground"><Loader2 className="h-8 w-8 animate-spin" /><p>Analyzing image...</p></div>}
+                             {classificationResult && (
+                                <Card className="w-full bg-background">
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">{classificationResult.classification}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm text-foreground/80">{classificationResult.description}</p>
+                                    </CardContent>
+                                </Card>
+                            )}
+                            {!isClassifying && !classificationResult && !classificationPreview && <p className="text-muted-foreground text-center">Your classification result will appear here.</p>}
+                        </Card>
+                   </div>
                 </TabsContent>
               </Tabs>
             </CardContent>
