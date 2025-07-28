@@ -37,7 +37,7 @@ Content:
 {{{content}}}
 
 Your Title:`,
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'gemini-1.5-flash-latest',
 });
 
 const generateTitleFlow = ai.defineFlow(

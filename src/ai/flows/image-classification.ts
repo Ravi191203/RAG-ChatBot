@@ -48,7 +48,7 @@ const prompt = ai.definePrompt({
 Your response must follow the structured output format.
 
 Image: {{media url=imageDataUri}}`,
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'gemini-1.5-flash-latest',
 });
 
 

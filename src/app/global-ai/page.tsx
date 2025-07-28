@@ -34,7 +34,7 @@ export default function GlobalAiPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState("googleai/gemini-1.5-flash-latest");
+  const [selectedModel, setSelectedModel] = useState("gemini-1.5-flash-latest");
   const { toast } = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);
   const { user, logout } = useAuth();
@@ -234,23 +234,21 @@ export default function GlobalAiPage() {
           )}
         </div>
       </header>
-      <main className="flex flex-1 flex-col">
-        <div className="flex-1 overflow-y-auto">
+       <main className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-4xl px-4 py-6">
-            <ChatPanel
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              onRegenerate={handleRegenerateResponse}
-              isResponding={isResponding}
-              onStopGenerating={handleStopGenerating}
-              onMessageSaved={onMessageSaved}
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-              title="Global AI Chat"
-              description="Ask me anything! I'm here to help with any topic."
-            />
+              <ChatPanel
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  onRegenerate={handleRegenerateResponse}
+                  isResponding={isResponding}
+                  onStopGenerating={handleStopGenerating}
+                  onMessageSaved={onMessageSaved}
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
+                  title="Global AI Chat"
+                  description="Ask me anything! I'm here to help with any topic."
+              />
           </div>
-        </div>
       </main>
     </div>
   );

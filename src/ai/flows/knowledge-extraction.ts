@@ -61,7 +61,7 @@ const extractKnowledgeFlow = ai.defineFlow(
     try {
         const { output } = await ai.generate({
             prompt: extractKnowledgePrompt,
-            model: googleAI.model('googleai/gemini-1.5-flash-latest'),
+            model: googleAI.model('gemini-1.5-flash-latest'),
             input
         });
         if (output) {

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { ScrollArea } from "./ui/scroll-area";
 
 
 type Props = {
@@ -123,14 +124,14 @@ export function ChatPanel({
   const isInputDisabled = knowledge !== undefined ? (!knowledge || isResponding) : isResponding;
 
   const geminiModels = [
-    { value: "googleai/gemini-1.5-flash-latest", label: "Gemini 1.5 Flash" },
-    { value: "googleai/gemini-pro", label: "Gemini Pro" },
-    { value: "googleai/gemini-1.5-pro-latest", label: "Gemini 1.5 Pro" },
+    { value: "gemini-1.5-flash-latest", label: "Gemini 1.5 Flash" },
+    { value: "gemini-pro", label: "Gemini Pro" },
+    { value: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro" },
   ];
 
   return (
-    <div className="flex flex-col h-full">
-        <CardHeader className="border-b sticky top-16 bg-background/95 backdrop-blur-sm z-10">
+    <Card className="flex flex-col h-full w-full max-w-4xl mx-auto shadow-lg border-none">
+        <CardHeader className="border-b">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div className="flex-1">
                   <CardTitle className="font-headline">{title}</CardTitle>
@@ -162,31 +163,31 @@ export function ChatPanel({
           </div>
         </CardHeader>
         <CardContent className="flex-1 p-0">
-          <div className="space-y-6 p-4 sm:p-6">
-            {messages.length === 0 ? (
-              <div className="flex h-full items-center justify-center py-20">
-                <p className="text-center text-muted-foreground">
-                  { isInputDisabled && knowledge !== undefined
-                    ? "First, provide a document on the home page."
-                    : "Ask a question to get started."}
-                </p>
-              </div>
-            ) : (
-              messages.map((msg, index) => (
-                <ChatMessage 
-                  key={index} 
-                  message={msg} 
-                  isLastMessage={index === messages.length - 1}
-                  onRegenerate={onRegenerate}
-                  onMessageSaved={onMessageSaved}
-                />
-              ))
-            )}
-            {isResponding && <TypingIndicator />}
-            <div ref={messagesEndRef} />
-          </div>
+          <div className="p-4 sm:p-6 space-y-6">
+              {messages.length === 0 ? (
+                <div className="flex h-full items-center justify-center py-20">
+                  <p className="text-center text-muted-foreground">
+                    { isInputDisabled && knowledge !== undefined
+                      ? "First, provide a document on the home page."
+                      : "Ask a question to get started."}
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg, index) => (
+                  <ChatMessage 
+                    key={index} 
+                    message={msg} 
+                    isLastMessage={index === messages.length - 1}
+                    onRegenerate={onRegenerate}
+                    onMessageSaved={onMessageSaved}
+                  />
+                ))
+              )}
+              {isResponding && <TypingIndicator />}
+              <div ref={messagesEndRef} />
+            </div>
         </CardContent>
-        <CardFooter className="sticky bottom-0 pt-4 border-t bg-background/95 backdrop-blur-sm">
+        <CardFooter className="pt-4 border-t bg-background">
           <div className="flex w-full items-center space-x-2">
               {isResponding ? (
                   <Button
@@ -213,14 +214,14 @@ export function ChatPanel({
                           disabled={isInputDisabled}
                           autoComplete="off"
                       />
-                      <Button
-                          type="submit"
-                          size="icon"
-                          disabled={isInputDisabled || !input.trim()}
-                          aria-label="Send message"
-                      >
-                          <Send className="h-4 w-4" />
-                      </Button>
+                       <Button
+                            type="submit"
+                            size="icon"
+                            disabled={isInputDisabled || !input.trim()}
+                            aria-label="Send message"
+                        >
+                            <Send className="h-4 w-4" />
+                        </Button>
                       {lastMessageIsAssistant && !isResponding && (
                           <Button
                               variant="outline"
@@ -236,6 +237,6 @@ export function ChatPanel({
               )}
           </div>
         </CardFooter>
-    </div>
+    </Card>
   );
 }

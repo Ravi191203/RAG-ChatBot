@@ -42,7 +42,7 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const modelName = input.model || 'googleai/gemini-1.5-flash-latest';
+    const modelName = input.model || 'gemini-1.5-flash-latest';
     
     try {
         const model = googleAI.model(modelName);
