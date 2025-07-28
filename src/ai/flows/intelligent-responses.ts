@@ -11,25 +11,35 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { ModelReference } from 'genkit/model';
+import {ModelReference} from 'genkit/model';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
   question: z.string().describe('The user question to answer.'),
   model: z.string().optional().describe('The name of the model to use.'),
 });
-export type IntelligentResponseInput = z.infer<typeof IntelligentResponseInputSchema>;
+export type IntelligentResponseInput = z.infer<
+  typeof IntelligentResponseInputSchema
+>;
 
 const IntelligentResponseOutputSchema = z.object({
   answer: z.string().describe('The answer to the question.'),
 });
-export type IntelligentResponseOutput = z.infer<typeof IntelligentResponseOutputSchema>;
+export type IntelligentResponseOutput = z.infer<
+  typeof IntelligentResponseOutputSchema
+>;
 
-export async function intelligentResponse(input: IntelligentResponseInput): Promise<IntelligentResponseOutput> {
+export async function intelligentResponse(
+  input: IntelligentResponseInput
+): Promise<IntelligentResponseOutput> {
   return intelligentResponseFlow(input);
 }
 
-const promptTemplate = `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
+const intelligentResponsePrompt = ai.definePrompt({
+  name: 'intelligentResponsePrompt',
+  input: {schema: IntelligentResponseInputSchema},
+  output: {schema: IntelligentResponseOutputSchema},
+  prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 Analyze the context and chat history below, then answer the user's question.
 
@@ -45,7 +55,15 @@ Always strive to be helpful and provide a well-reasoned answer.
 -------------------------
 
 User Question: {{{question}}}
-`;
+`,
+  retry: {
+    backoff: {
+      delay: 5000,
+      maxRetries: 3,
+      multiplier: 2,
+    },
+  },
+});
 
 const intelligentResponseFlow = ai.defineFlow(
   {
@@ -53,31 +71,19 @@ const intelligentResponseFlow = ai.defineFlow(
     inputSchema: IntelligentResponseInputSchema,
     outputSchema: IntelligentResponseOutputSchema,
   },
-  async (input) => {
-    const modelName = (input.model || 'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
-    
-    const prompt = ai.definePrompt({
-      name: 'dynamicIntelligentResponsePrompt',
-      input: { schema: IntelligentResponseInputSchema },
-      output: { schema: IntelligentResponseOutputSchema },
-      prompt: promptTemplate,
-      model: modelName,
-      retry: {
-        backoff: {
-          delay: 5000,
-          maxRetries: 3,
-          multiplier: 2,
-        },
-      },
-    });
+  async input => {
+    const model = (input.model ||
+      'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
 
     try {
-      const { output } = await prompt(input);
+      const {output} = await intelligentResponsePrompt(input, {model});
       return output!;
     } catch (error) {
       console.warn(`Model ${input.model} failed.`, error);
       // Optional: You could implement a fallback to a default model here if needed.
-      throw new Error(`The selected AI model (${input.model}) failed to respond. Please try a different model or try again later.`);
+      throw new Error(
+        `The selected AI model (${input.model}) failed to respond. Please try a different model or try again later.`
+      );
     }
   }
 );

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -21,9 +22,13 @@ const ExtractKnowledgeOutputSchema = z.object({
     .string()
     .describe('The key information extracted from the content.'),
 });
-export type ExtractKnowledgeOutput = z.infer<typeof ExtractKnowledgeOutputSchema>;
+export type ExtractKnowledgeOutput = z.infer<
+  typeof ExtractKnowledgeOutputSchema
+>;
 
-export async function extractKnowledge(input: ExtractKnowledgeInput): Promise<ExtractKnowledgeOutput> {
+export async function extractKnowledge(
+  input: ExtractKnowledgeInput
+): Promise<ExtractKnowledgeOutput> {
   return extractKnowledgeFlow(input);
 }
 
@@ -52,10 +57,10 @@ Your Extracted Knowledge:`,
 });
 
 const fallbackPrompt = ai.definePrompt({
-    name: 'extractKnowledgeFallbackPrompt',
-    input: {schema: ExtractKnowledgeInputSchema},
-    output: {schema: ExtractKnowledgeOutputSchema},
-    prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
+  name: 'extractKnowledgeFallbackPrompt',
+  input: {schema: ExtractKnowledgeInputSchema},
+  output: {schema: ExtractKnowledgeOutputSchema},
+  prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
 
 Instead of just listing key points, I want you to truly understand the text and present your understanding. Your output should be a detailed, well-structured summary that captures the core concepts, key arguments, and any important data or examples. Explain the main ideas in your own words, as if you were creating a study guide for someone who needs to master this information.
 
@@ -65,15 +70,15 @@ Content:
 {{{content}}}
 
 Your Extracted Knowledge:`,
-    model: 'googleai/gemini-pro',
-    retry: {
-      backoff: {
-        delay: 5000,
-        maxRetries: 5,
-        multiplier: 2,
-      },
+  model: 'googleai/gemini-pro',
+  retry: {
+    backoff: {
+      delay: 5000,
+      maxRetries: 5,
+      multiplier: 2,
     },
-  });
+  },
+});
 
 const extractKnowledgeFlow = ai.defineFlow(
   {
@@ -83,12 +88,12 @@ const extractKnowledgeFlow = ai.defineFlow(
   },
   async input => {
     try {
-        const {output} = await primaryPrompt(input);
-        return output!;
+      const {output} = await primaryPrompt(input);
+      return output!;
     } catch (error) {
-        console.warn('Primary model failed, switching to fallback.', error);
-        const {output} = await fallbackPrompt(input);
-        return output!;
+      console.warn('Primary model failed, switching to fallback.', error);
+      const {output} = await fallbackPrompt(input);
+      return output!;
     }
   }
 );
