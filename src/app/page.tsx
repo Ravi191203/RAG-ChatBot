@@ -28,8 +28,9 @@ export default function Home() {
 
 
   const fetchLastKnowledge = async () => {
+    if (!user) return;
     try {
-      const response = await fetch('/api/knowledge');
+      const response = await fetch(`/api/knowledge?userId=${user.uid}`);
       if (response.ok) {
         const data = await response.json();
         if (data.knowledge && !sessionStorage.getItem("knowledgeBase")) {
@@ -52,7 +53,8 @@ export default function Home() {
         // If not in session, try fetching the last one from DB
         fetchLastKnowledge();
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleExtractKnowledge = async (content: string) => {
     if (!content) {

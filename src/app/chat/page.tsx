@@ -72,10 +72,10 @@ export default function ChatPage() {
 
 
   const handleSendMessage = async (question: string) => {
-    if (!sessionId) {
+    if (!sessionId || !user) {
       toast({
         title: "Error",
-        description: "Session not initialized.",
+        description: "Session not initialized or user not logged in.",
         variant: "destructive",
       });
       return;
@@ -94,7 +94,14 @@ export default function ChatPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ knowledge, sessionId, history: newMessages, question, model: selectedModel }),
+        body: JSON.stringify({ 
+            knowledge, 
+            sessionId, 
+            history: newMessages, 
+            question, 
+            model: selectedModel,
+            userId: user.uid 
+        }),
         signal: controller.signal,
       });
 

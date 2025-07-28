@@ -13,7 +13,7 @@ export type ChatMessage = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { knowledge, sessionId, history, question, model } = await req.json();
+    const { knowledge, sessionId, history, question, model, userId } = await req.json();
 
     if (!history || !question || !sessionId) {
       return NextResponse.json(
@@ -21,14 +21,18 @@ export async function POST(req: NextRequest) {
         {status: 400}
       );
     }
+     if (!userId) {
+        return NextResponse.json({ error: 'User ID is required' }, { status: 401 });
+    }
 
     let dbKnowledge = "";
     // Only fetch DB knowledge if session knowledge is also provided (i.e., for contextual chat)
     if (knowledge && process.env.MONGODB_URI) {
         try {
             const { db } = await connectToDatabase();
+            // Fetch the last knowledge for the specific user
             const lastKnowledge = await db.collection('knowledge_base').findOne(
-                { type: 'knowledge' },
+                { userId: userId, type: 'knowledge' },
                 { sort: { createdAt: -1 } }
             );
             if (lastKnowledge) {

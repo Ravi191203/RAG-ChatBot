@@ -4,27 +4,43 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { generateTitle } from '@/ai/flows/title-generation';
 
+// Helper function to get user ID from request body or query params
+const getUserId = async (req: NextRequest): Promise<string | null> => {
+    const { searchParams } = new URL(req.url);
+    if (req.method === 'GET' || req.method === 'DELETE') {
+        return searchParams.get('userId');
+    }
+    const body = await req.json();
+    // Re-create the readable stream for subsequent calls
+    (req as any).json = async () => body; 
+    return body.userId;
+};
+
+
 export async function POST(req: NextRequest) {
   try {
-    const { knowledge, type } = await req.json();
+    const { knowledge, type, userId } = await req.json();
+
+    if (!userId) {
+        return NextResponse.json({ error: 'User ID is required' }, { status: 401 });
+    }
     if (!knowledge) {
       return NextResponse.json({ error: 'Knowledge content is required' }, { status: 400 });
     }
-
     if (!process.env.MONGODB_URI) {
         return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
     
-    // Generate a title for the content
     const titleResponse = await generateTitle({ content: knowledge });
     const title = titleResponse.title;
 
     const { db } = await connectToDatabase();
     
     const result = await db.collection('knowledge_base').insertOne({
+      userId: userId,
       title: title,
       content: knowledge,
-      type: type || 'knowledge', // Default to 'knowledge' for backward compatibility
+      type: type || 'knowledge',
       createdAt: new Date(),
     });
 
@@ -44,8 +60,10 @@ export async function GET(req: NextRequest) {
         const { db } = await connectToDatabase();
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
+        const userId = searchParams.get('userId');
 
-        // If an ID is provided, fetch a single item
+        // If an ID is provided, fetch a single item.
+        // It's a public share link, so we don't check for userId.
         if (id) {
             if (!ObjectId.isValid(id)) {
                 return NextResponse.json({ error: 'Invalid Item ID' }, { status: 400 });
@@ -57,14 +75,17 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ savedItem: item });
         }
         
-        // Fetch the most recent knowledge entry
+        // For all other GET requests, userId is required.
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 401 });
+        }
+
         const lastKnowledge = await db.collection('knowledge_base').findOne(
-          { type: 'knowledge' },
+          { userId: userId, type: 'knowledge' },
           { sort: { createdAt: -1 } }
         );
 
-        // Fetch all saved items
-        const savedItems = await db.collection('knowledge_base').find({}).sort({ createdAt: -1 }).toArray();
+        const savedItems = await db.collection('knowledge_base').find({ userId: userId }).sort({ createdAt: -1 }).toArray();
     
         return NextResponse.json({ 
             knowledge: lastKnowledge?.content || "",
@@ -80,26 +101,32 @@ export async function DELETE(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
+        const userId = searchParams.get('userId');
 
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 401 });
+        }
         if (!id) {
             return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
         }
         if (!ObjectId.isValid(id)) {
             return NextResponse.json({ error: 'Invalid Item ID' }, { status: 400 });
         }
-
         if (!process.env.MONGODB_URI) {
             return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
         }
 
         const { db } = await connectToDatabase();
         
+        // Ensure user can only delete their own items
         const result = await db.collection('knowledge_base').deleteOne({
             _id: new ObjectId(id),
+            userId: userId,
         });
 
         if (result.deletedCount === 0) {
-            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+            // This can mean either the item doesn't exist or the user doesn't have permission
+            return NextResponse.json({ error: 'Item not found or permission denied' }, { status: 404 });
         }
 
         return NextResponse.json({ success: true });
@@ -111,32 +138,35 @@ export async function DELETE(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
     try {
-        const { id, content } = await req.json();
+        const { id, content, userId } = await req.json();
 
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 401 });
+        }
         if (!id || !content) {
             return NextResponse.json({ error: 'Item ID and content are required' }, { status: 400 });
         }
         if (!ObjectId.isValid(id)) {
             return NextResponse.json({ error: 'Invalid Item ID' }, { status: 400 });
         }
-
         if (!process.env.MONGODB_URI) {
             return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
         }
 
-        // Generate a new title for the updated content
         const titleResponse = await generateTitle({ content: content });
         const title = titleResponse.title;
 
         const { db } = await connectToDatabase();
         
+        // Ensure user can only update their own items
         const result = await db.collection('knowledge_base').updateOne(
-            { _id: new ObjectId(id) },
+            { _id: new ObjectId(id), userId: userId },
             { $set: { title: title, content: content, updatedAt: new Date() } }
         );
 
         if (result.matchedCount === 0) {
-            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+            // This can mean either the item doesn't exist or the user doesn't have permission
+            return NextResponse.json({ error: 'Item not found or permission denied' }, { status: 404 });
         }
 
         return NextResponse.json({ success: true });

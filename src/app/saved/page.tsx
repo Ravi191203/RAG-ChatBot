@@ -18,9 +18,13 @@ export default function SavedPage() {
 
 
     const fetchSavedItems = useCallback(async () => {
+        if (!user) {
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
-            const response = await fetch('/api/knowledge');
+            const response = await fetch(`/api/knowledge?userId=${user.uid}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch saved items");
             }
@@ -36,11 +40,13 @@ export default function SavedPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, user]);
 
     useEffect(() => {
-        fetchSavedItems();
-    }, [fetchSavedItems]);
+        if (user) {
+            fetchSavedItems();
+        }
+    }, [user, fetchSavedItems]);
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">

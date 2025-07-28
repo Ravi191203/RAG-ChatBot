@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/auth-context";
 
 
 type Props = {
@@ -58,6 +59,7 @@ export function ChatPanel({
   const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
   const [isSavingChat, setIsSavingChat] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const lastMessageIsAssistant = messages.length > 0 && messages[messages.length - 1].role === 'assistant';
 
@@ -75,6 +77,10 @@ export function ChatPanel({
   };
 
   const handleSaveChat = async () => {
+    if (!user) {
+        toast({ title: "Authentication Error", description: "You must be logged in to save chats.", variant: "destructive" });
+        return;
+    }
     setIsSavingChat(true);
     try {
         const chatContent = messages.map(m => `**${m.role === 'user' ? 'User' : 'Assistant'}:**\n\n${m.content}`).join('\n\n---\n\n');
@@ -82,7 +88,11 @@ export function ChatPanel({
         const response = await fetch('/api/knowledge', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ knowledge: chatContent, type: 'chat_session' })
+            body: JSON.stringify({ 
+                knowledge: chatContent, 
+                type: 'chat_session',
+                userId: user.uid
+            })
         });
         
         if (!response.ok) {

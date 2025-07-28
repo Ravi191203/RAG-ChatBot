@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import remarkGfm from "remark-gfm";
 import { CodeBlock } from "./code-block";
+import { useAuth } from "@/context/auth-context";
 
 
 type Props = {
@@ -34,6 +35,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
   const [fileName, setFileName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleFileChange = (file: File | null) => {
     if (file) {
@@ -84,13 +86,20 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
   };
 
   const handleSaveKnowledge = async () => {
-    if (!knowledge) return;
+    if (!knowledge || !user) {
+        toast({ title: "Error", description: !user ? "You must be logged in." : "No knowledge to save.", variant: "destructive" });
+        return;
+    }
     setIsSaving(true);
     try {
       const response = await fetch('/api/knowledge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ knowledge, type: 'knowledge' }),
+        body: JSON.stringify({ 
+            knowledge, 
+            type: 'knowledge',
+            userId: user.uid
+        }),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -242,7 +251,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
                 variant="outline" 
                 size="sm"
                 onClick={handleSaveKnowledge}
-                disabled={!knowledge || isSaving}
+                disabled={!knowledge || isSaving || !user}
               >
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
                 Save

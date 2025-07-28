@@ -60,10 +60,10 @@ export default function GlobalAiPage() {
 
 
   const handleSendMessage = async (question: string) => {
-    if (!sessionId) {
+    if (!sessionId || !user) {
       toast({
         title: "Error",
-        description: "Session not initialized.",
+        description: "Session not initialized or user not logged in.",
         variant: "destructive",
       });
       return;
@@ -83,7 +83,14 @@ export default function GlobalAiPage() {
           'Content-Type': 'application/json',
         },
         // We pass `knowledge: ""` to signal to the API this is a general chat
-        body: JSON.stringify({ knowledge: "", sessionId, history: newMessages, question, model: selectedModel }),
+        body: JSON.stringify({ 
+            knowledge: "", 
+            sessionId, 
+            history: newMessages, 
+            question, 
+            model: selectedModel,
+            userId: user.uid
+        }),
         signal: controller.signal,
       });
 

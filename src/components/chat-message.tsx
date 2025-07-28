@@ -12,6 +12,7 @@ import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 
 
 type Props = {
@@ -24,17 +25,26 @@ type Props = {
 export function ChatMessage({ message, isLastMessage, onRegenerate, onMessageSaved }: Props) {
   const isUser = message.role === "user";
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   const handleSaveMessage = async () => {
+    if (!user) {
+        toast({ title: "Authentication Error", description: "You must be logged in to save messages.", variant: "destructive" });
+        return;
+    }
     setIsSaving(true);
     try {
       const response = await fetch('/api/knowledge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ knowledge: message.content, type: 'chat_message' }),
+        body: JSON.stringify({ 
+            knowledge: message.content, 
+            type: 'chat_message',
+            userId: user.uid 
+        }),
       });
       if (!response.ok) {
         const errorData = await response.json();

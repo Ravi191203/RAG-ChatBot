@@ -41,10 +41,12 @@ import { Textarea } from "./ui/textarea";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
+import { useAuth } from "@/context/auth-context";
 
 
 export type SavedItem = {
     _id: string;
+    userId: string;
     title: string;
     content: string;
     type: 'knowledge' | 'chat_message' | 'chat_session';
@@ -59,6 +61,7 @@ type Props = {
 
 export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Props) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
@@ -73,9 +76,13 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
 
 
   const handleDelete = async (id: string) => {
+    if (!user) {
+        toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
     setIsDeleting(id);
     try {
-      const response = await fetch(`/api/knowledge?id=${id}`, {
+      const response = await fetch(`/api/knowledge?id=${id}&userId=${user.uid}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -99,13 +106,16 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
   };
 
   const handleEdit = async () => {
-    if (!editingItemId) return;
+    if (!editingItemId || !user) {
+      toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+      return;
+    }
     setIsEditing(editingItemId);
     try {
       const response = await fetch('/api/knowledge', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingItemId, content: editingContent }),
+        body: JSON.stringify({ id: editingItemId, content: editingContent, userId: user.uid }),
       });
       if (!response.ok) {
         throw new Error('Failed to update item');
