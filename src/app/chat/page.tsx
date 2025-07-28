@@ -4,9 +4,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatPanel } from "@/components/chat-panel";
-import { Bot, Home, MessageSquare, Save, Sparkles } from 'lucide-react';
+import { Bot, Home, LogOut, Save, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useAuth } from "@/context/auth-context";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 export type ChatMessage = {
@@ -36,6 +38,8 @@ export default function ChatPage() {
   const [selectedModel, setSelectedModel] = useState("googleai/gemini-1.5-flash-latest");
   const { toast } = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const { user, logout } = useAuth();
+
 
   useEffect(() => {
     const id = getSessionId();
@@ -159,25 +163,42 @@ export default function ChatPage() {
             <Bot className="h-7 w-7 text-primary" />
             <h1 className="text-xl font-bold font-headline">Contextual Companion</h1>
         </div>
-         <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-                <Link href="/saved">
-                    <Save className="mr-2 h-4 w-4" />
-                    Saved
-                </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/global-ai">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Global AI
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                Home
-              </Link>
-            </Button>
+         <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                    <Link href="/saved">
+                        <Save className="mr-2 h-4 w-4" />
+                        Saved
+                    </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/global-ai">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Global AI
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/">
+                    <Home className="mr-2 h-4 w-4" />
+                    Home
+                  </Link>
+                </Button>
+            </div>
+             {user && (
+                 <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                            <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium hidden sm:inline">{user.displayName}</span>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={logout} className="h-9 w-9">
+                        <LogOut className="h-4 w-4" />
+                        <span className="sr-only">Sign Out</span>
+                    </Button>
+                </div>
+            )}
         </div>
       </header>
       <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-start justify-center">
