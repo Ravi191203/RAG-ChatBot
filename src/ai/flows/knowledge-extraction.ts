@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 
 const ExtractKnowledgeInputSchema = z.object({
   content: z.string().describe('The content to extract knowledge from.'),
@@ -47,7 +48,6 @@ Your final output should only be the extracted knowledge, without any preamble o
 Content:
 {{{content}}}
 `,
-    model: 'googleai/gemini-1.5-flash-latest',
 });
 
 
@@ -59,7 +59,11 @@ const extractKnowledgeFlow = ai.defineFlow(
   },
   async input => {
     try {
-        const { output } = await extractKnowledgePrompt(input);
+        const { output } = await ai.generate({
+            prompt: extractKnowledgePrompt,
+            model: googleAI.model('gemini-1.5-flash-latest'),
+            input
+        });
         if (output) {
             return output;
         }
