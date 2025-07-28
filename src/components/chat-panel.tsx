@@ -12,7 +12,6 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ScrollArea, ScrollAreaViewport } from "@/components/ui/scroll-area";
 import { Loader2, Send, RefreshCw, Square, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
@@ -56,18 +55,21 @@ export function ChatPanel({
   description
 }: Props) {
   const [input, setInput] = useState("");
-  const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isSavingChat, setIsSavingChat] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
   const lastMessageIsAssistant = messages.length > 0 && messages[messages.length - 1].role === 'assistant';
 
+   const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
-    if (scrollAreaViewportRef.current) {
-      scrollAreaViewportRef.current.scrollTop = scrollAreaViewportRef.current.scrollHeight;
-    }
+    scrollToBottom();
   }, [messages, isResponding]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,8 +129,8 @@ export function ChatPanel({
   ];
 
   return (
-    <Card className="flex h-full flex-col border-0 shadow-none bg-transparent">
-       <CardHeader className="border-b">
+    <div className="flex flex-col h-full">
+      <CardHeader className="border-b">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div className="flex-1">
                 <CardTitle className="font-headline">{title}</CardTitle>
@@ -159,37 +161,32 @@ export function ChatPanel({
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 p-0 overflow-hidden">
-        <div className="relative h-full">
-            <ScrollArea className="absolute inset-0">
-              <ScrollAreaViewport ref={scrollAreaViewportRef} className="h-full">
-                <div className="space-y-6 p-4 sm:p-6">
-                  {messages.length === 0 ? (
-                    <div className="flex h-full items-center justify-center">
-                      <p className="text-center text-muted-foreground">
-                        { isInputDisabled && knowledge !== undefined
-                          ? "First, provide a document on the home page."
-                          : "Ask a question to get started."}
-                      </p>
-                    </div>
-                  ) : (
-                    messages.map((msg, index) => (
-                      <ChatMessage 
-                        key={index} 
-                        message={msg} 
-                        isLastMessage={index === messages.length - 1}
-                        onRegenerate={onRegenerate}
-                        onMessageSaved={onMessageSaved}
-                     />
-                    ))
-                  )}
-                  {isResponding && <TypingIndicator />}
-                </div>
-              </ScrollAreaViewport>
-            </ScrollArea>
+      <CardContent className="flex-1 p-0">
+        <div className="space-y-6 p-4 sm:p-6">
+          {messages.length === 0 ? (
+            <div className="flex h-full items-center justify-center py-20">
+              <p className="text-center text-muted-foreground">
+                { isInputDisabled && knowledge !== undefined
+                  ? "First, provide a document on the home page."
+                  : "Ask a question to get started."}
+              </p>
+            </div>
+          ) : (
+            messages.map((msg, index) => (
+              <ChatMessage 
+                key={index} 
+                message={msg} 
+                isLastMessage={index === messages.length - 1}
+                onRegenerate={onRegenerate}
+                onMessageSaved={onMessageSaved}
+              />
+            ))
+          )}
+          {isResponding && <TypingIndicator />}
+           <div ref={messagesEndRef} />
         </div>
       </CardContent>
-       <CardFooter className="pt-4 border-t bg-background/95 backdrop-blur-sm">
+       <CardFooter className="sticky bottom-0 pt-4 border-t bg-background/95 backdrop-blur-sm">
          <div className="flex w-full items-center space-x-2">
             {isResponding ? (
                  <Button
@@ -239,6 +236,6 @@ export function ChatPanel({
             )}
         </div>
       </CardFooter>
-    </Card>
+    </div>
   );
 }

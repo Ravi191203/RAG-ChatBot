@@ -246,7 +246,7 @@ export default function ChatPage() {
         </div>
       </header>
        <main className="flex-1 overflow-y-auto">
-        <div className="h-full max-w-4xl mx-auto flex flex-col">
+        <div className="max-w-4xl mx-auto">
           <ChatPanel
             messages={messages}
             onSendMessage={handleSendMessage}
