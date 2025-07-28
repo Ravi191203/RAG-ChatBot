@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -26,6 +27,20 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
   return generateImageFlow(input);
 }
 
+
+const makeRequest = async (apiKey: string | undefined, input: GenerateImageInput) => {
+    const model = googleAI.model('gemini-2.0-flash-preview-image-generation', { apiKey });
+    const { media } = await ai.generate({
+        model,
+        prompt: input.prompt,
+        config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+        },
+    });
+    return media;
+}
+
+
 const generateImageFlow = ai.defineFlow(
   {
     name: 'generateImageFlow',
@@ -33,13 +48,26 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    const { media } = await ai.generate({
-        model: googleAI.model('gemini-2.0-flash-preview-image-generation'),
-        prompt: input.prompt,
-        config: {
-            responseModalities: ['TEXT', 'IMAGE'],
-        },
-    });
+    let media;
+    try {
+        media = await makeRequest(process.env.GEMINI_API_KEY, input);
+        if (!media?.url) throw new Error("Primary key returned empty response.");
+    } catch (primaryError: any) {
+        console.warn(`Primary API key failed for image generation. Error: ${primaryError.message}`);
+        const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
+        if (backupApiKey) {
+            console.log("Attempting to use backup API key for image generation...");
+            try {
+                media = await makeRequest(backupApiKey, input);
+                if (!media?.url) throw new Error("Backup key returned empty response.");
+            } catch (backupError: any) {
+                console.error(`Backup API key also failed for image generation. Error: ${backupError.message}`);
+                throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+            }
+        } else {
+             throw new Error(`The AI model failed to respond. Details: ${primaryError.message}`);
+        }
+    }
 
     if (!media?.url) {
       throw new Error('Image generation failed to produce an image.');

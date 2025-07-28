@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -52,15 +53,10 @@ async function toWav(pcmData: Buffer, channels = 1, rate = 24000, sampleWidth = 
 }
 
 
-const generateSpeechFlow = ai.defineFlow(
-  {
-    name: 'generateSpeechFlow',
-    inputSchema: GenerateSpeechInputSchema,
-    outputSchema: GenerateSpeechOutputSchema,
-  },
-  async (input) => {
-     const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
+const makeRequest = async (apiKey: string | undefined, input: GenerateSpeechInput) => {
+    const model = googleAI.model('gemini-2.5-flash-preview-tts', { apiKey });
+    const { media } = await ai.generate({
+      model,
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
@@ -71,6 +67,38 @@ const generateSpeechFlow = ai.defineFlow(
       },
       prompt: input.text,
     });
+    return media;
+}
+
+
+const generateSpeechFlow = ai.defineFlow(
+  {
+    name: 'generateSpeechFlow',
+    inputSchema: GenerateSpeechInputSchema,
+    outputSchema: GenerateSpeechOutputSchema,
+  },
+  async (input) => {
+     let media;
+     try {
+        media = await makeRequest(process.env.GEMINI_API_KEY, input);
+        if (!media) throw new Error("Primary key returned empty response.");
+     } catch (primaryError: any) {
+        console.warn(`Primary API key failed for TTS generation. Error: ${primaryError.message}`);
+        const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
+        if (backupApiKey) {
+            console.log("Attempting to use backup API key for TTS generation...");
+            try {
+                media = await makeRequest(backupApiKey, input);
+                if (!media) throw new Error("Backup key returned empty response.");
+            } catch (backupError: any) {
+                console.error(`Backup API key also failed for TTS generation. Error: ${backupError.message}`);
+                throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+            }
+        } else {
+            throw new Error(`The AI model failed to respond. Details: ${primaryError.message}`);
+        }
+     }
+
     if (!media) {
       throw new Error('no media returned');
     }
