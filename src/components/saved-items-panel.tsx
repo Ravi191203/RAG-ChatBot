@@ -15,7 +15,7 @@ import remarkGfm from "remark-gfm";
 import { CodeBlock } from "./code-block";
 import { format } from "date-fns";
 import { Button } from "./ui/button";
-import { Pencil, Trash2, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Loader2, Camera } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,8 +38,9 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Textarea } from "./ui/textarea";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import html2canvas from 'html2canvas';
 
 
 export type SavedItem = {
@@ -62,6 +63,9 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
   const [editingContent, setEditingContent] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCapturing, setIsCapturing] = useState<string | null>(null);
+
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   
   const savedKnowledge = savedItems.filter(item => item.type === 'knowledge');
   const savedChats = savedItems.filter(item => item.type === 'chat_message');
@@ -123,6 +127,39 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
       setIsEditDialogOpen(false);
     }
   };
+
+  const handleCapture = async (id: string, index: number) => {
+    const cardElement = cardRefs.current[index];
+    if (!cardElement) return;
+
+    setIsCapturing(id);
+    try {
+        const canvas = await html2canvas(cardElement, {
+            useCORS: true,
+            backgroundColor: null, 
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `capture-${id}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({
+            title: 'Success',
+            description: 'Image snippet captured and downloaded.',
+        });
+    } catch (error) {
+        console.error('Error capturing element:', error);
+        toast({
+            title: 'Error',
+            description: 'Could not capture image.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsCapturing(null);
+    }
+  };
   
   const openEditDialog = (item: SavedItem) => {
     setEditingItemId(item._id);
@@ -130,9 +167,13 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
     setIsEditDialogOpen(true);
   };
   
-  const SavedItemCard = ({ item }: { item: SavedItem }) => (
-    <div key={item._id} className="p-4 rounded-md border bg-background relative group">
+  const SavedItemCard = ({ item, index }: { item: SavedItem, index: number }) => (
+    <div key={item._id} ref={el => cardRefs.current[index] = el} className="p-4 rounded-md border bg-background relative group">
       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCapture(item._id, index)} disabled={!!isCapturing}>
+          {isCapturing === item._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+          <span className="sr-only">Capture</span>
+        </Button>
         <Dialog open={isEditDialogOpen && editingItemId === item._id} onOpenChange={(open) => { if (!open) setIsEditDialogOpen(false)}}>
           <DialogTrigger asChild>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(item)}>
@@ -193,8 +234,8 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
             <TabsContent value="knowledge" className="flex-1 m-0">
                <ScrollArea className="h-72 rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
-                      {savedKnowledge.length > 0 ? savedKnowledge.map(item => (
-                          <SavedItemCard key={item._id} item={item} />
+                      {savedKnowledge.length > 0 ? savedKnowledge.map((item, index) => (
+                          <SavedItemCard key={item._id} item={item} index={index}/>
                       )) : (
                           <p className="text-center text-muted-foreground p-8">No knowledge bases saved yet.</p>
                       )}
@@ -204,8 +245,8 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
              <TabsContent value="chats" className="flex-1 m-0">
                <ScrollArea className="h-72 rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
-                      {savedChats.length > 0 ? savedChats.map(item => (
-                          <SavedItemCard key={item._id} item={item} />
+                      {savedChats.length > 0 ? savedChats.map((item, index) => (
+                          <SavedItemCard key={item._id} item={item} index={savedKnowledge.length + index} />
                       )) : (
                           <p className="text-center text-muted-foreground p-8">No chat messages saved yet.</p>
                       )}
