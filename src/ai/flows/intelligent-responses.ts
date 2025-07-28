@@ -36,7 +36,7 @@ export async function intelligentResponse(
 }
 
 const makeRequest = async (apiKey: string | undefined, input: IntelligentResponseInput) => {
-    const modelName = input.model || 'gemini-1.5-flash-latest';
+    const modelName = input.model || 'gemini-pro';
     const model = googleAI.model(modelName, { apiKey });
 
     const { output } = await ai.generate({
@@ -71,7 +71,7 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const modelName = input.model || 'gemini-1.5-flash-latest';
+    const modelName = input.model || 'gemini-pro';
     
     try {
         // Try with the primary API key from the environment

@@ -35,7 +35,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState("gemini-1.5-flash-latest");
+  const [selectedModel, setSelectedModel] = useState("gemini-pro");
   const { toast } = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);
   const { user, logout } = useAuth();
