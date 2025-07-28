@@ -152,7 +152,13 @@ export default function ChatPage() {
     if (!lastUserMessage) return;
 
     // Remove the last assistant response and then resubmit the user's prompt.
-    setMessages((prev) => prev.slice(0, -1));
+    setMessages((prev) => {
+        const lastAiResponseIndex = prev.map(m => m.role).lastIndexOf('assistant');
+        if(lastAiResponseIndex > -1) {
+            return prev.slice(0, lastAiResponseIndex);
+        }
+        return prev;
+    });
     handleSendMessage(lastUserMessage.content);
   };
 
@@ -164,41 +170,41 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+    <div className="flex flex-col h-screen bg-background text-foreground">
+       <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
         <div className="flex items-center gap-2">
             <Bot className="h-7 w-7 text-primary" />
-            <h1 className="text-xl font-bold font-headline">Contextual Companion</h1>
+            <h1 className="text-xl font-bold font-headline hidden sm:block">Contextual Companion</h1>
         </div>
-         <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2">
+         <div className="flex items-center gap-2 sm:gap-4">
+             <div className="flex items-center gap-1 sm:gap-2">
                 <Button variant="outline" size="sm" asChild>
                     <Link href="/saved">
-                        <Save className="mr-2 h-4 w-4" />
-                        Saved
+                        <Save className="mr-0 h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Saved</span>
                     </Link>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/global-ai">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Global AI
+                    <Sparkles className="mr-0 h-4 w-4 sm:mr-2" />
+                     <span className="hidden sm:inline">Global AI</span>
                   </Link>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/">
-                    <Home className="mr-2 h-4 w-4" />
-                    Home
+                    <Home className="mr-0 h-4 w-4 sm:mr-2" />
+                     <span className="hidden sm:inline">Home</span>
                   </Link>
                 </Button>
             </div>
              {user && (
-                 <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2 sm:gap-4">
                     <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
                             <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <span className="text-sm font-medium hidden sm:inline">{user.displayName}</span>
+                        <span className="text-sm font-medium hidden md:inline">{user.displayName}</span>
                     </div>
                     <Button variant="outline" size="icon" onClick={logout} className="h-9 w-9">
                         <LogOut className="h-4 w-4" />
@@ -208,8 +214,8 @@ export default function ChatPage() {
             )}
         </div>
       </header>
-      <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-start justify-center">
-        <div className="w-full max-w-2xl h-[calc(100vh-10rem)]">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-start justify-center overflow-hidden">
+        <div className="w-full max-w-4xl h-full">
             <ChatPanel
               messages={messages}
               onSendMessage={handleSendMessage}

@@ -146,8 +146,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
 
     setIsCapturing(id);
     try {
-        // Temporarily remove hover effects for capture
-        const buttons = cardElement.querySelector('.absolute.top-2.right-2');
+        const buttons = cardElement.querySelector('.action-buttons');
         buttons?.classList.add('opacity-0');
 
         const canvas = await html2canvas(cardElement, {
@@ -229,8 +228,8 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
   };
 
   const SavedItemCard = ({ item, index }: { item: SavedItem, index: number }) => (
-    <div key={item._id} ref={el => cardRefs.current[index] = el} className="p-4 rounded-md border bg-background relative group">
-        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+    <div key={item._id} ref={el => cardRefs.current[index] = el} className="p-4 rounded-md border bg-card relative group">
+        <div className="action-buttons absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-card rounded-full">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleShare(item._id)}>
                 <Share2 className="h-4 w-4" />
                 <span className="sr-only">Share</span>
@@ -302,23 +301,23 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
             </TabsList>
             
             <TabsContent value="knowledge" className="flex-1 m-0">
-               <ScrollArea className="h-[calc(100vh-20rem)] md:h-[calc(100vh-22rem)] rounded-md border bg-muted/50">
-                  <div className="p-4 space-y-4">
+               <ScrollArea className="h-[calc(100vh-18rem)] md:h-[calc(100vh-20rem)] rounded-md">
+                  <div className="p-1 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                       {savedKnowledge.length > 0 ? savedKnowledge.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={index}/>
                       )) : (
-                          <p className="text-center text-muted-foreground p-8">No knowledge bases saved yet.</p>
+                          <p className="text-center text-muted-foreground p-8 col-span-full">No knowledge bases saved yet.</p>
                       )}
                   </div>
               </ScrollArea>
             </TabsContent>
              <TabsContent value="chats" className="flex-1 m-0">
-               <ScrollArea className="h-[calc(100vh-20rem)] md:h-[calc(100vh-22rem)] rounded-md border bg-muted/50">
-                  <div className="p-4 space-y-4">
+               <ScrollArea className="h-[calc(100vh-18rem)] md:h-[calc(100vh-20rem)] rounded-md">
+                  <div className="p-1 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                       {savedChats.length > 0 ? savedChats.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={savedKnowledge.length + index} />
                       )) : (
-                          <p className="text-center text-muted-foreground p-8">No chat messages saved yet.</p>
+                          <p className="text-center text-muted-foreground p-8 col-span-full">No chat messages saved yet.</p>
                       )}
                   </div>
               </ScrollArea>

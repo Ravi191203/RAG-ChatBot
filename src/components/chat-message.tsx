@@ -108,7 +108,7 @@ export function ChatMessage({ message, isLastMessage, onRegenerate, onMessageSav
   return (
     <div
       className={cn(
-        "group flex items-start gap-3",
+        "group flex items-start gap-3 w-full",
         isUser ? "justify-end" : "justify-start"
       )}
     >
@@ -121,7 +121,7 @@ export function ChatMessage({ message, isLastMessage, onRegenerate, onMessageSav
       )}
       <div
         className={cn(
-          "relative max-w-[80%] rounded-lg p-3 text-sm shadow-sm",
+          "relative max-w-[85%] rounded-lg p-3 text-sm shadow-md",
           isUser
             ? "bg-primary text-primary-foreground"
             : "bg-card",
@@ -137,8 +137,8 @@ export function ChatMessage({ message, isLastMessage, onRegenerate, onMessageSav
             {message.content}
           </ReactMarkdown>
         </div>
-         {!isUser && (
-          <div className="absolute -right-36 top-1/2 flex -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
+         {!isUser && isLastMessage && (
+          <div className="absolute right-0 -bottom-10 flex opacity-0 transition-opacity group-hover:opacity-100">
             <Button variant="ghost" size="icon" onClick={handlePlayAudio} disabled={isSynthesizing}>
               {isSynthesizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Speaker className="h-4 w-4" />}
               <span className="sr-only">Play Audio</span>
@@ -147,7 +147,7 @@ export function ChatMessage({ message, isLastMessage, onRegenerate, onMessageSav
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               <span className="sr-only">Save Message</span>
             </Button>
-            {isLastMessage && onRegenerate && (
+            {onRegenerate && (
                 <Button variant="ghost" size="icon" onClick={onRegenerate}>
                     <RefreshCw className="h-4 w-4" />
                     <span className="sr-only">Regenerate Response</span>
@@ -158,9 +158,13 @@ export function ChatMessage({ message, isLastMessage, onRegenerate, onMessageSav
       </div>
       {isUser && (
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarFallback>
-            <User className="h-5 w-5" />
-          </AvatarFallback>
+            {user?.photoURL ? (
+                <AvatarImage src={user.photoURL} alt={user.displayName || "User"} />
+            ) : (
+                <AvatarFallback>
+                    <User className="h-5 w-5" />
+                </AvatarFallback>
+            )}
         </Avatar>
       )}
     </div>

@@ -148,7 +148,6 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
             <TabsTrigger value="direct">Direct Chat</TabsTrigger>
           </TabsList>
 
-          {/* AI Extraction Tabs */}
           <TabsContent value="text" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
              <form onSubmit={handleExtractSubmit} className="flex flex-1 flex-col gap-4">
                 <Textarea
@@ -158,7 +157,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
                     setFileName(""); 
                   }}
                   placeholder="Paste your document content here to have the AI extract key knowledge..."
-                  className="flex-1"
+                  className="flex-1 min-h-[150px] sm:min-h-0"
                   disabled={isExtracting}
                 />
                 <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
@@ -175,7 +174,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
                   onDrop={onDrop}
                   onDragOver={onDragOver}
                   onClick={() => document.getElementById('extract-file-input')?.click()}
-                  className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors min-h-[150px] sm:min-h-0"
                 >
                   <FileUp className="h-10 w-10 text-muted-foreground" />
                   <p className="mt-4 text-muted-foreground">
@@ -199,7 +198,6 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
             </form>
           </TabsContent>
           
-          {/* Direct Chat Tab */}
            <TabsContent value="direct" className="flex flex-1 flex-col gap-4 overflow-hidden m-0">
             <form onSubmit={handleDirectChatSubmit} className="flex flex-1 flex-col gap-4">
               <div className="flex-1 flex flex-col gap-4">
@@ -209,42 +207,23 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
                     setContent(e.target.value);
                     setFileName("");
                   }}
-                  placeholder="Paste raw text here, or upload a file below..."
-                  className="flex-1"
+                  placeholder="Paste raw text here to use it directly as context in the chat..."
+                  className="flex-1 min-h-[150px] sm:min-h-0"
                   disabled={isExtracting}
                 />
-                <div 
-                  onDrop={onDrop}
-                  onDragOver={onDragOver}
-                  onClick={() => document.getElementById('direct-file-input')?.click()}
-                  className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-                >
-                  <FileUp className="h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {fileName ? fileName : 'Or drop a .txt/.md file here'}
-                  </p>
-                  <input 
-                    id="direct-file-input" 
-                    type="file" 
-                    className="hidden" 
-                    onChange={handleFilePicker}
-                    accept=".txt,.md"
-                    disabled={isExtracting}
-                  />
-                </div>
               </div>
               <Button type="submit" className="w-full" disabled={!content.trim() || isExtracting}>
                   <MessageSquareText className="mr-2 h-4 w-4" />
-                  Start Chat
+                  Start Chat with this Text
               </Button>
             </form>
           </TabsContent>
-
         </Tabs>
+
         <div className="flex min-h-0 flex-1 flex-col gap-2">
            <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-muted-foreground">
-              {activeTab === 'direct' ? 'Raw Text Preview' : 'Extracted Knowledge'}
+              {activeTab === 'direct' ? 'Text Preview' : 'Extracted Knowledge Preview'}
             </h3>
             {activeTab !== 'direct' && (
               <Button 
@@ -259,7 +238,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
             )}
           </div>
           <div className="flex-1 rounded-md border bg-muted/50">
-            <ScrollArea className="h-full">
+            <ScrollArea className="h-full max-h-48 sm:max-h-full">
               <div className="prose prose-sm dark:prose-invert max-w-none p-4 prose-p:my-0 prose-headings:my-0">
                 {knowledge ? (
                    <ReactMarkdown

@@ -104,7 +104,7 @@ export function ChatPanel({
             title: "Success",
             description: "Your chat session has been saved.",
         });
-        onMessageSaved(); // This can trigger a refresh on the saved items page if needed
+        onMessageSaved();
     } catch (error) {
         console.error("Error saving chat:", error);
         toast({
@@ -118,19 +118,18 @@ export function ChatPanel({
 };
 
   
-  // Disable chat if responding. If knowledge is provided, also check for its presence.
   const isInputDisabled = knowledge !== undefined ? (!knowledge || isResponding) : isResponding;
 
   const geminiModels = [
-    { value: "googleai/gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast)" },
-    { value: "googleai/gemini-pro", label: "Gemini Pro (Balanced)" },
-    { value: "googleai/gemini-1.5-pro-latest", label: "Gemini 1.5 Pro (Powerful)" },
+    { value: "googleai/gemini-1.5-flash-latest", label: "Gemini 1.5 Flash" },
+    { value: "googleai/gemini-pro", label: "Gemini Pro" },
+    { value: "googleai/gemini-1.5-pro-latest", label: "Gemini 1.5 Pro" },
   ];
 
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div className="flex-1">
                 <CardTitle className="font-headline">{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>
@@ -146,7 +145,7 @@ export function ChatPanel({
                     Save Chat
                 </Button>
                 <Select value={selectedModel} onValueChange={onModelChange} disabled={isResponding}>
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                         <SelectValue placeholder="Select a model" />
                     </SelectTrigger>
                     <SelectContent>
@@ -168,7 +167,7 @@ export function ChatPanel({
                 <div className="flex h-full items-center justify-center">
                   <p className="text-center text-muted-foreground">
                     { isInputDisabled && knowledge !== undefined
-                      ? "First, provide a document and extract knowledge."
+                      ? "First, provide a document on the home page."
                       : "Ask a question to get started."}
                   </p>
                 </div>
@@ -188,7 +187,7 @@ export function ChatPanel({
           </ScrollAreaViewport>
         </ScrollArea>
       </CardContent>
-      <CardFooter className="pt-4">
+      <CardFooter className="pt-4 border-t">
          <div className="flex w-full items-center space-x-2">
             {isResponding ? (
                  <Button
@@ -210,7 +209,7 @@ export function ChatPanel({
                         placeholder={
                         isInputDisabled && knowledge !== undefined
                             ? "Waiting for knowledge base..."
-                            : "Type your question..."
+                            : "Type your message..."
                         }
                         disabled={isInputDisabled}
                         autoComplete="off"
