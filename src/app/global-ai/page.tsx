@@ -169,85 +169,87 @@ export default function GlobalAiPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
-       <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
         <div className="flex items-center gap-2">
-            <Bot className="h-7 w-7 text-primary" />
-            <h1 className="text-xl font-bold font-headline hidden sm:block">Contextual Companion</h1>
+          <Bot className="h-7 w-7 text-primary" />
+          <h1 className="text-xl font-bold font-headline hidden sm:block">Contextual Companion</h1>
         </div>
-         <div className="flex items-center gap-2 sm:gap-4">
-             <div className="flex items-center gap-1 sm:gap-2">
-                <Button variant="outline" size="sm" asChild>
-                    <Link href="/saved">
-                        <Save className="mr-0 h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Saved</span>
-                    </Link>
-                </Button>
-                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/tools">
-                    <Wand2 className="mr-0 h-4 w-4 sm:mr-2" />
-                     <span className="hidden sm:inline">AI Tools</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/chat">
-                    <MessageSquare className="mr-0 h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Contextual Chat</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/">
-                    <Home className="mr-0 h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Home</span>
-                  </Link>
-                </Button>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/saved">
+                <Save className="mr-0 h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Saved</span>
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/tools">
+                <Wand2 className="mr-0 h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">AI Tools</span>
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/chat">
+                <MessageSquare className="mr-0 h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Contextual Chat</span>
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/">
+                <Home className="mr-0 h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Home</span>
+              </Link>
+            </Button>
+          </div>
+          {user && (
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                  <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium hidden md:inline">{user.displayName}</span>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9">
+                    <LogOut className="h-4 w-4" />
+                    <span className="sr-only">Sign Out</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      You will be redirected to the login page.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={logout}>Sign Out</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-             {user && (
-                 <div className="flex items-center gap-2 sm:gap-4">
-                    <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-                            <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium hidden md:inline">{user.displayName}</span>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-9 w-9">
-                          <LogOut className="h-4 w-4" />
-                          <span className="sr-only">Sign Out</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            You will be redirected to the login page.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={logout}>Sign Out</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                </div>
-            )}
+          )}
         </div>
       </header>
-       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
-          <ChatPanel
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            onRegenerate={handleRegenerateResponse}
-            isResponding={isResponding}
-            onStopGenerating={handleStopGenerating}
-            onMessageSaved={onMessageSaved}
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-            title="Global AI Chat"
-            description="Ask me anything! I'm here to help with any topic."
-          />
+      <main className="flex flex-1 flex-col">
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-4xl px-4 py-6">
+            <ChatPanel
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              onRegenerate={handleRegenerateResponse}
+              isResponding={isResponding}
+              onStopGenerating={handleStopGenerating}
+              onMessageSaved={onMessageSaved}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+              title="Global AI Chat"
+              description="Ask me anything! I'm here to help with any topic."
+            />
+          </div>
         </div>
       </main>
     </div>

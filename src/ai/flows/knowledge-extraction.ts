@@ -43,7 +43,7 @@ Instead of just listing key points, I want you to truly understand the text and 
 
 If the content is empty, nonsensical, or too brief to analyze, please state that clearly.
 
-Your final output should only be the extracted knowledge, without any preamble or extra formatting.
+Your final output should be only the extracted knowledge, without any preamble or extra formatting.
 
 Content:
 {{{content}}}
@@ -61,7 +61,7 @@ const extractKnowledgeFlow = ai.defineFlow(
     try {
         const { output } = await ai.generate({
             prompt: extractKnowledgePrompt,
-            model: googleAI.model('gemini-1.5-flash-latest'),
+            model: googleAI.model('googleai/gemini-1.5-flash-latest'),
             input
         });
         if (output) {

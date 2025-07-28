@@ -44,8 +44,8 @@ const intelligentResponseFlow = ai.defineFlow(
   async (input) => {
     const modelName = input.model || 'googleai/gemini-1.5-flash-latest';
     
-    const makeRequest = async (apiKey: string | undefined) => {
-        const model = googleAI.model(modelName, { apiKey });
+    try {
+        const model = googleAI.model(modelName);
 
         const result = await ai.generate({
             model,
@@ -74,30 +74,11 @@ ${input.question}
             throw new Error('The AI model returned an empty response.');
         }
         return output;
-    };
-
-    try {
-        // First, try with the primary API key
-        return await makeRequest(process.env.GEMINI_API_KEY);
     } catch (error: any) {
-        // Check if the error is a rate limit error (statusCode 429)
-        if (error.cause?.status === 429 && process.env.GEMINI_BACKUP_API_KEY) {
-            console.warn("Primary API key failed with rate limit. Retrying with backup key.");
-            try {
-                // If it fails, try with the backup API key
-                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
-            } catch (backupError: any) {
-                console.error(`Backup API key also failed for model ${modelName}.`, backupError);
-                throw new Error(
-                    `The selected AI model (${modelName}) and the backup both failed to respond. Details: ${backupError.message}`
-                );
-            }
-        } else {
-             console.error(`Model ${modelName} failed.`, error);
-             throw new Error(
-                `The selected AI model (${modelName}) failed to respond. Details: ${error.message}`
-            );
-        }
+        console.error(`Model ${modelName} failed.`, error);
+        throw new Error(
+            `The selected AI model (${modelName}) failed to respond. Details: ${error.message}`
+        );
     }
   }
 );

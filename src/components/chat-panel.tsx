@@ -130,112 +130,112 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <CardHeader className="border-b">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-            <div className="flex-1">
-                <CardTitle className="font-headline">{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
-                <Button
-                    variant="outline"
-                    onClick={handleSaveChat}
-                    disabled={isSavingChat || messages.length === 0}
-                    className="w-full sm:w-auto"
-                    >
-                    {isSavingChat ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Chat
-                </Button>
-                <Select value={selectedModel} onValueChange={onModelChange} disabled={isResponding}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {geminiModels.map((model) => (
-                            <SelectItem key={model.value} value={model.value}>
-                                {model.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 p-0">
-        <div className="space-y-6 p-4 sm:p-6">
-          {messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center py-20">
-              <p className="text-center text-muted-foreground">
-                { isInputDisabled && knowledge !== undefined
-                  ? "First, provide a document on the home page."
-                  : "Ask a question to get started."}
-              </p>
-            </div>
-          ) : (
-            messages.map((msg, index) => (
-              <ChatMessage 
-                key={index} 
-                message={msg} 
-                isLastMessage={index === messages.length - 1}
-                onRegenerate={onRegenerate}
-                onMessageSaved={onMessageSaved}
-              />
-            ))
-          )}
-          {isResponding && <TypingIndicator />}
-           <div ref={messagesEndRef} />
-        </div>
-      </CardContent>
-       <CardFooter className="sticky bottom-0 pt-4 border-t bg-background/95 backdrop-blur-sm">
-         <div className="flex w-full items-center space-x-2">
-            {isResponding ? (
-                 <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={onStopGenerating}
-                >
-                    <Square className="mr-2 h-4 w-4" />
-                    Stop Generating
-                </Button>
+        <CardHeader className="border-b sticky top-16 bg-background/95 backdrop-blur-sm z-10">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <div className="flex-1">
+                  <CardTitle className="font-headline">{title}</CardTitle>
+                  <CardDescription>{description}</CardDescription>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
+                  <Button
+                      variant="outline"
+                      onClick={handleSaveChat}
+                      disabled={isSavingChat || messages.length === 0}
+                      className="w-full sm:w-auto"
+                      >
+                      {isSavingChat ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                      Save Chat
+                  </Button>
+                  <Select value={selectedModel} onValueChange={onModelChange} disabled={isResponding}>
+                      <SelectTrigger className="w-full sm:w-[180px]">
+                          <SelectValue placeholder="Select a model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {geminiModels.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                  {model.label}
+                              </SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+              </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 p-0">
+          <div className="space-y-6 p-4 sm:p-6">
+            {messages.length === 0 ? (
+              <div className="flex h-full items-center justify-center py-20">
+                <p className="text-center text-muted-foreground">
+                  { isInputDisabled && knowledge !== undefined
+                    ? "First, provide a document on the home page."
+                    : "Ask a question to get started."}
+                </p>
+              </div>
             ) : (
-                <form
-                    onSubmit={handleSubmit}
-                    className="flex w-full items-center space-x-2"
-                >
-                    <Input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder={
-                        isInputDisabled && knowledge !== undefined
-                            ? "Waiting for knowledge base..."
-                            : "Type your message..."
-                        }
-                        disabled={isInputDisabled}
-                        autoComplete="off"
-                    />
-                    <Button
-                        type="submit"
-                        size="icon"
-                        disabled={isInputDisabled || !input.trim()}
-                        aria-label="Send message"
-                    >
-                        <Send className="h-4 w-4" />
-                    </Button>
-                    {lastMessageIsAssistant && !isResponding && (
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={onRegenerate}
-                            disabled={isResponding}
-                            aria-label="Regenerate response"
-                            >
-                            <RefreshCw className="h-4 w-4" />
-                        </Button>
-                    )}
-                </form>
+              messages.map((msg, index) => (
+                <ChatMessage 
+                  key={index} 
+                  message={msg} 
+                  isLastMessage={index === messages.length - 1}
+                  onRegenerate={onRegenerate}
+                  onMessageSaved={onMessageSaved}
+                />
+              ))
             )}
-        </div>
-      </CardFooter>
+            {isResponding && <TypingIndicator />}
+            <div ref={messagesEndRef} />
+          </div>
+        </CardContent>
+        <CardFooter className="sticky bottom-0 pt-4 border-t bg-background/95 backdrop-blur-sm">
+          <div className="flex w-full items-center space-x-2">
+              {isResponding ? (
+                  <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={onStopGenerating}
+                  >
+                      <Square className="mr-2 h-4 w-4" />
+                      Stop Generating
+                  </Button>
+              ) : (
+                  <form
+                      onSubmit={handleSubmit}
+                      className="flex w-full items-center space-x-2"
+                  >
+                      <Input
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          placeholder={
+                          isInputDisabled && knowledge !== undefined
+                              ? "Waiting for knowledge base..."
+                              : "Type your message..."
+                          }
+                          disabled={isInputDisabled}
+                          autoComplete="off"
+                      />
+                      <Button
+                          type="submit"
+                          size="icon"
+                          disabled={isInputDisabled || !input.trim()}
+                          aria-label="Send message"
+                      >
+                          <Send className="h-4 w-4" />
+                      </Button>
+                      {lastMessageIsAssistant && !isResponding && (
+                          <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={onRegenerate}
+                              disabled={isResponding}
+                              aria-label="Regenerate response"
+                              >
+                              <RefreshCw className="h-4 w-4" />
+                          </Button>
+                      )}
+                  </form>
+              )}
+          </div>
+        </CardFooter>
     </div>
   );
 }
