@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Bot, Home, LogOut, Save, Sparkles, Wand2, Image as ImageIcon, Video, Download, GalleryHorizontal, FileUp } from 'lucide-react';
+import { Bot, Home, LogOut, Save, Sparkles, Wand2, Image as ImageIcon, Video, Download, GalleryHorizontal, FileUp, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,10 +23,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { CodeBlock } from '@/components/code-block';
 
 type ClassificationResult = {
     classification: string;
     description: string;
+    extractedText?: string;
 }
 
 export default function AiToolsPage() {
@@ -397,10 +401,19 @@ export default function AiToolsPage() {
                                 <Card className="w-full bg-background">
                                     <CardHeader>
                                         <CardTitle className="text-lg">{classificationResult.classification}</CardTitle>
-
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="space-y-4">
                                         <p className="text-sm text-foreground/80">{classificationResult.description}</p>
+                                        {classificationResult.extractedText && (
+                                            <div>
+                                                <h4 className="font-semibold mb-2 flex items-center gap-2"><FileText className="h-4 w-4"/> Extracted Text</h4>
+                                                <div className="prose prose-sm dark:prose-invert max-w-none rounded-md border bg-muted/50 p-4">
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock }}>
+                                                        {classificationResult.extractedText}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             )}
