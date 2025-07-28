@@ -32,6 +32,7 @@ export type ChatMessage = {
 
 export default function Home() {
   const [knowledge, setKnowledge] = useState<string>("");
+  const [originalContent, setOriginalContent] = useState<string>("");
   const [isExtracting, setIsExtracting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -61,6 +62,10 @@ export default function Home() {
       };
       fetchLastKnowledge();
     }
+     const storedOriginalContent = sessionStorage.getItem("originalContent");
+    if (storedOriginalContent) {
+      setOriginalContent(storedOriginalContent);
+    }
   }, [user]);
 
   const handleExtractKnowledge = async (content: string) => {
@@ -74,6 +79,7 @@ export default function Home() {
     }
     setIsExtracting(true);
     setKnowledge("");
+    setOriginalContent(content);
 
     try {
       const result = await extractKnowledge({ content });
@@ -82,6 +88,7 @@ export default function Home() {
 
       if (typeof window !== 'undefined') {
         sessionStorage.setItem("knowledgeBase", extracted);
+        sessionStorage.setItem("originalContent", content);
         // Clear previous chat messages when new knowledge is extracted
         sessionStorage.removeItem("chatMessages");
         sessionStorage.removeItem("globalChatMessages");
@@ -116,6 +123,7 @@ export default function Home() {
     setKnowledge(content);
      if (typeof window !== 'undefined') {
         sessionStorage.setItem("knowledgeBase", content);
+        sessionStorage.removeItem("originalContent");
         sessionStorage.removeItem("chatMessages");
         sessionStorage.removeItem("globalChatMessages");
       }
@@ -206,6 +214,7 @@ export default function Home() {
               onExtract={handleExtractKnowledge}
               onStartDirectChat={handleStartDirectChat}
               knowledge={knowledge}
+              originalContent={originalContent}
               isExtracting={isExtracting}
               onKnowledgeSaved={onItemsSaved}
             />

@@ -25,11 +25,12 @@ type Props = {
   onExtract: (content: string) => Promise<void>;
   onStartDirectChat: (content: string) => void;
   knowledge: string;
+  originalContent: string;
   isExtracting: boolean;
   onKnowledgeSaved: () => void;
 };
 
-export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtracting, onKnowledgeSaved }: Props) {
+export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, originalContent, isExtracting, onKnowledgeSaved }: Props) {
   const [activeTab, setActiveTab] = useState("text");
   const [content, setContent] = useState("");
   const [fileName, setFileName] = useState("");
@@ -131,6 +132,21 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
      e.preventDefault();
      onStartDirectChat(content);
   }
+  
+  const DisplayContent = ({ content }: { content: string }) => (
+    <ScrollArea className="h-full max-h-48 sm:max-h-full">
+      <div className="prose prose-sm dark:prose-invert max-w-none p-4 prose-p:my-0 prose-headings:my-0">
+        {content ? (
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock }}>
+            {content}
+          </ReactMarkdown>
+        ) : (
+          <p className="text-muted-foreground">No content yet.</p>
+        )}
+      </div>
+    </ScrollArea>
+  );
+
 
   return (
     <Card className="flex h-full flex-col">
@@ -241,40 +257,30 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, isExtr
         </Tabs>
 
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-muted-foreground">
-              {activeTab === 'direct' ? 'Text Preview' : 'Extracted Knowledge Preview'}
-            </h3>
-            {activeTab !== 'direct' && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleSaveKnowledge}
-                disabled={!knowledge || isSaving || !user}
-              >
-                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                Save
-              </Button>
-            )}
-          </div>
-          <div className="flex-1 rounded-md border bg-muted/50">
-            <ScrollArea className="h-full max-h-48 sm:max-h-full">
-              <div className="prose prose-sm dark:prose-invert max-w-none p-4 prose-p:my-0 prose-headings:my-0">
-                {knowledge ? (
-                   <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      code: CodeBlock,
-                    }}
-                  >
-                    {knowledge}
-                  </ReactMarkdown>
-                ) : (
-                  <p className="text-muted-foreground">No knowledge configured yet.</p>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
+            <Tabs defaultValue="extracted" className="flex flex-1 flex-col overflow-hidden">
+                 <div className="flex items-center justify-between">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="extracted">AI-Extracted Knowledge</TabsTrigger>
+                        <TabsTrigger value="original">Original Content</TabsTrigger>
+                    </TabsList>
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleSaveKnowledge}
+                        disabled={!knowledge || isSaving || !user}
+                        className="ml-4"
+                    >
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                        Save
+                    </Button>
+                </div>
+                <TabsContent value="extracted" className="flex-1 rounded-md border bg-muted/50 m-0 mt-2">
+                   <DisplayContent content={knowledge} />
+                </TabsContent>
+                <TabsContent value="original" className="flex-1 rounded-md border bg-muted/50 m-0 mt-2">
+                    <DisplayContent content={originalContent} />
+                </TabsContent>
+            </Tabs>
         </div>
       </CardContent>
     </Card>
