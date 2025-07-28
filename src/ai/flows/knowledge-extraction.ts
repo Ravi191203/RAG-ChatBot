@@ -38,10 +38,11 @@ Instead of just listing key points, I want you to truly understand the text and 
 
 If the content is empty, nonsensical, or too brief to analyze, please state that clearly.
 
-Content:
-{{{content}}}
+Your final output should only be the extracted knowledge, without any preamble or extra formatting.
 
-Your Extracted Knowledge:`;
+Content:
+${"{{{content}}}"}
+`;
 
 
 const extractKnowledgeFlow = ai.defineFlow(
@@ -55,12 +56,9 @@ const extractKnowledgeFlow = ai.defineFlow(
 
     for (const modelName of models) {
         try {
-            const { output } = await ai.generate({
+            const { text } = await ai.generate({
                 model: modelName,
                 prompt: promptText,
-                output: {
-                    schema: ExtractKnowledgeOutputSchema
-                },
                 retry: {
                     backoff: {
                         delay: 5000,
@@ -71,7 +69,8 @@ const extractKnowledgeFlow = ai.defineFlow(
             }, {
               content: input.content
             });
-            return output!;
+
+            return { extractedKnowledge: text };
         } catch (error) {
             console.warn(`Model ${modelName} failed. Trying next model.`, error);
         }

@@ -44,7 +44,7 @@ Analyze the context and chat history below, then answer the user's question.
 - Do not mention that you cannot access the internet. Instead, answer based on the information you were trained on.
 - If the question is ambiguous, ask for clarification.
 
-Always strive to be helpful and provide a well-reasoned answer.`;
+Your final output should be only the answer to the user's question, without any preamble or extra formatting.`;
 
 const intelligentResponseFlow = ai.defineFlow(
   {
@@ -57,26 +57,22 @@ const intelligentResponseFlow = ai.defineFlow(
       'googleai/gemini-1.5-flash-latest') as ModelReference<any>;
     
     const prompt = `--- Context & History ---
-{{{context}}}
+${input.context}
 -------------------------
 
-User Question: {{{question}}}`;
+User Question: ${input.question}`;
 
     try {
-      const {output} = await ai.generate({
+      const {text} = await ai.generate({
         model: model,
         prompt: prompt,
         system: systemPrompt,
-        output: {
-            schema: IntelligentResponseOutputSchema
-        }
-      }, {
-        context: input.context,
-        question: input.question,
       });
-      return output!;
+
+      return { answer: text };
+
     } catch (error: any) {
-      console.warn(`Model ${input.model || 'default'} failed.`, error);
+      console.error(`Model ${input.model || 'default'} failed.`, error);
       throw new Error(
         `The selected AI model (${input.model || 'default'}) failed to respond. Please try a different model or try again later. Details: ${error.message}`
       );
