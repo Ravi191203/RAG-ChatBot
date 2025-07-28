@@ -42,7 +42,7 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    // Session and knowledge logic now runs only on the client
+    // Session and knowledge logic now runs on the client
     let currentSessionId = sessionStorage.getItem("chatSessionId");
     if (!currentSessionId) {
       currentSessionId = generateSessionId();
@@ -91,12 +91,14 @@ export default function ChatPage() {
     ];
     setMessages(newMessages);
     setIsResponding(true);
-
+    let response;
+    let result;
+    
     try {
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      const response = await fetch('/api/chat', {
+      response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +114,7 @@ export default function ChatPage() {
         signal: controller.signal,
       });
 
-      const result = await response.json();
+      result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || 'API request failed');

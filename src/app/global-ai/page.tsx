@@ -79,12 +79,14 @@ export default function GlobalAiPage() {
     ];
     setMessages(newMessages);
     setIsResponding(true);
+    let response;
+    let result;
 
     try {
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      const response = await fetch('/api/chat', {
+      response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +102,7 @@ export default function GlobalAiPage() {
         signal: controller.signal,
       });
 
-      const result = await response.json();
+      result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || 'API request failed');
