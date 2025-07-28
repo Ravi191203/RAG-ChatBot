@@ -122,10 +122,8 @@ export default function ChatPage() {
     } catch (error: any) {
         if (error.name === 'AbortError') {
             console.log("Request aborted by user.");
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage.role === 'user') {
-                setMessages(prev => prev.slice(0, -1));
-            }
+            // Revert the user's message optimistic update
+            setMessages(currentMessages);
             return;
         }
       console.error(error);
@@ -160,7 +158,13 @@ export default function ChatPage() {
     setMessages((prev) => {
         const lastAiResponseIndex = prev.map(m => m.role).lastIndexOf('assistant');
         if(lastAiResponseIndex > -1) {
-            return prev.slice(0, lastAiResponseIndex);
+            const history = prev.slice(0, lastAiResponseIndex);
+             // Also remove the last user message to avoid duplication on resend
+            const lastUserMessageIndex = history.map(m => m.role).lastIndexOf('user');
+             if (lastUserMessageIndex > -1) {
+                return history.slice(0, lastUserMessageIndex);
+            }
+            return history;
         }
         return prev;
     });
