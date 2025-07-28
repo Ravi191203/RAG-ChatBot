@@ -137,11 +137,6 @@ export default function ChatPage() {
         content: `Sorry, I encountered an error. Please try again. \n\n**Error Details:**\n\`\`\`\n${error.message}\n\`\`\``,
       };
       setMessages((prev) => [...prev, errorMessage]);
-      toast({
-        title: "Response Failed",
-        description: `Could not get a response. Details: ${error.message}`,
-        variant: "destructive",
-      });
     } finally {
       setIsResponding(false);
       abortControllerRef.current = null;
