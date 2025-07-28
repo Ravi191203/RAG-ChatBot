@@ -2,7 +2,7 @@
 "use client";
 
 import type { ChatMessage as ChatMessageType } from "@/app/chat/page";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Bot, User, Plus, Speaker, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
