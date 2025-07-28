@@ -49,6 +49,8 @@ export function CodeBlock({ node, inline, className, children, ...props }: CodeB
       <SyntaxHighlighter
         language={language}
         style={vscDarkPlus}
+        wrapLongLines={false}
+        wrapLines={true}
         customStyle={{
           margin: 0,
           padding: '1rem',

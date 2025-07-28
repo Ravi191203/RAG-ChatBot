@@ -74,8 +74,10 @@ const intelligentResponseFlow = ai.defineFlow(
     const model = googleAI.model(modelName.replace('googleai/', '') as any);
 
     try {
-        const promptInput = { context: input.context, question: input.question };
-        const { output } = await intelligentResponsePrompt(promptInput, { model });
+        const { output } = await intelligentResponsePrompt({
+            input: { context: input.context, question: input.question },
+            model
+        });
         
         if (!output) {
             throw new Error('The AI model returned an empty response.');
