@@ -13,7 +13,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { logger } from 'genkit/logging';
-import { checkOperation, startGenerate } from 'genkit/model';
+import { startGenerate } from 'genkit/model';
 
 
 const GenerateVideoInputSchema = z.object({
@@ -94,7 +94,7 @@ const checkVideoStatusFlow = ai.defineFlow(
     async (input) => {
         logger.info("Checking status for operation:", input.operationName);
         try {
-            let operation = await checkOperation({ name: input.operationName });
+            let operation = await ai.checkOperation({ name: input.operationName });
 
             if (!operation) {
                  throw new Error("Operation not found.");
