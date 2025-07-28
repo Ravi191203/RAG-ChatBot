@@ -58,9 +58,6 @@ const extractKnowledgeFlow = ai.defineFlow(
             const { output } = await ai.generate({
                 model: modelName,
                 prompt: promptText,
-                input: {
-                    content: input.content
-                },
                 output: {
                     schema: ExtractKnowledgeOutputSchema
                 },
@@ -71,6 +68,8 @@ const extractKnowledgeFlow = ai.defineFlow(
                         multiplier: 2,
                     },
                 },
+            }, {
+              content: input.content
             });
             return output!;
         } catch (error) {

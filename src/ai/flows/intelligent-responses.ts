@@ -67,19 +67,18 @@ User Question: {{{question}}}`;
         model: model,
         prompt: prompt,
         system: systemPrompt,
-        input: {
-            context: input.context,
-            question: input.question,
-        },
         output: {
             schema: IntelligentResponseOutputSchema
         }
+      }, {
+        context: input.context,
+        question: input.question,
       });
       return output!;
-    } catch (error) {
-      console.warn(`Model ${input.model} failed.`, error);
+    } catch (error: any) {
+      console.warn(`Model ${input.model || 'default'} failed.`, error);
       throw new Error(
-        `The selected AI model (${input.model}) failed to respond. Please try a different model or try again later.`
+        `The selected AI model (${input.model || 'default'}) failed to respond. Please try a different model or try again later. Details: ${error.message}`
       );
     }
   }
