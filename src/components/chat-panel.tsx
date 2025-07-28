@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollAreaViewport } from "@/components/ui/scroll-area";
-import { Loader2, Send, RefreshCw } from "lucide-react";
+import { Loader2, Send, RefreshCw, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { TypingIndicator } from "./typing-indicator";
@@ -31,6 +31,7 @@ type Props = {
   onSendMessage: (question: string) => Promise<void>;
   onRegenerate: () => void;
   isResponding: boolean;
+  onStopGenerating: () => void;
   knowledge?: string; // Optional for global chat
   onMessageSaved: () => void;
   selectedModel: string;
@@ -44,6 +45,7 @@ export function ChatPanel({
   onSendMessage,
   onRegenerate,
   isResponding,
+  onStopGenerating,
   knowledge,
   onMessageSaved,
   selectedModel,
@@ -64,13 +66,13 @@ export function ChatPanel({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isResponding) return;
     onSendMessage(input);
     setInput("");
   };
   
   // Disable chat if responding. If knowledge is provided, also check for its presence.
-  const isChatDisabled = knowledge !== undefined ? (!knowledge || isResponding) : isResponding;
+  const isInputDisabled = knowledge !== undefined ? (!knowledge || isResponding) : isResponding;
 
   const geminiModels = [
     { value: "googleai/gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast)" },
@@ -107,7 +109,7 @@ export function ChatPanel({
               {messages.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
                   <p className="text-center text-muted-foreground">
-                    { isChatDisabled && knowledge !== undefined
+                    { isInputDisabled && knowledge !== undefined
                       ? "First, provide a document and extract knowledge."
                       : "Ask a question to get started."}
                   </p>
@@ -129,45 +131,52 @@ export function ChatPanel({
         </ScrollArea>
       </CardContent>
       <CardFooter className="pt-4">
-        <div className="flex w-full items-center space-x-2">
-            <form
-            onSubmit={handleSubmit}
-            className="flex w-full items-center space-x-2"
-            >
-            <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={
-                isChatDisabled && knowledge !== undefined
-                    ? "Waiting for knowledge base..."
-                    : "Type your question..."
-                }
-                disabled={isChatDisabled}
-                autoComplete="off"
-            />
-            <Button
-                type="submit"
-                size="icon"
-                disabled={isChatDisabled || !input.trim()}
-                aria-label="Send message"
-            >
-                {isResponding ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                <Send className="h-4 w-4" />
-                )}
-            </Button>
-            </form>
-            {lastMessageIsAssistant && !isResponding && (
-                <Button
+         <div className="flex w-full items-center space-x-2">
+            {isResponding ? (
+                 <Button
                     variant="outline"
-                    size="icon"
-                    onClick={onRegenerate}
-                    disabled={isResponding}
-                    aria-label="Regenerate response"
-                    >
-                    <RefreshCw className="h-4 w-4" />
+                    className="w-full"
+                    onClick={onStopGenerating}
+                >
+                    <Square className="mr-2 h-4 w-4" />
+                    Stop Generating
                 </Button>
+            ) : (
+                <form
+                    onSubmit={handleSubmit}
+                    className="flex w-full items-center space-x-2"
+                >
+                    <Input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={
+                        isInputDisabled && knowledge !== undefined
+                            ? "Waiting for knowledge base..."
+                            : "Type your question..."
+                        }
+                        disabled={isInputDisabled}
+                        autoComplete="off"
+                    />
+                    <Button
+                        type="submit"
+                        size="icon"
+                        disabled={isInputDisabled || !input.trim()}
+                        aria-label="Send message"
+                    >
+                        <Send className="h-4 w-4" />
+                    </Button>
+                    {lastMessageIsAssistant && !isResponding && (
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={onRegenerate}
+                            disabled={isResponding}
+                            aria-label="Regenerate response"
+                            >
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
+                    )}
+                </form>
             )}
         </div>
       </CardFooter>

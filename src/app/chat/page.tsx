@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatPanel } from "@/components/chat-panel";
 import { Bot, Home, MessageSquare, Save, Sparkles } from 'lucide-react';
@@ -35,6 +35,7 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("googleai/gemini-1.5-flash-latest");
   const { toast } = useToast();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const id = getSessionId();
@@ -81,12 +82,16 @@ export default function ChatPage() {
     setIsResponding(true);
 
     try {
-       const response = await fetch('/api/chat', {
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ knowledge, sessionId, history: newMessages, question, model: selectedModel }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -98,7 +103,15 @@ export default function ChatPage() {
 
       const assistantMessage: ChatMessage = { role: "assistant", content: result.answer };
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.log("Request aborted by user.");
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage.role === 'user') {
+                setMessages(prev => prev.slice(0, -1));
+            }
+            return;
+        }
       console.error(error);
       const errorMessage: ChatMessage = {
         role: "assistant",
@@ -112,6 +125,14 @@ export default function ChatPage() {
       });
     } finally {
       setIsResponding(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleStopGenerating = () => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        setIsResponding(false);
     }
   };
 
@@ -119,8 +140,7 @@ export default function ChatPage() {
     const lastUserMessage = messages.findLast((msg) => msg.role === 'user');
     if (!lastUserMessage) return;
 
-    // Remove the last two messages (user's last prompt and assistant's last response)
-    // and then resubmit the user's prompt. We remove the user prompt to avoid duplication.
+    // Remove the last assistant response and then resubmit the user's prompt.
     setMessages((prev) => prev.slice(0, -1));
     handleSendMessage(lastUserMessage.content);
   };
@@ -167,6 +187,7 @@ export default function ChatPage() {
               onSendMessage={handleSendMessage}
               onRegenerate={handleRegenerateResponse}
               isResponding={isResponding}
+              onStopGenerating={handleStopGenerating}
               knowledge={knowledge}
               onMessageSaved={onMessageSaved}
               selectedModel={selectedModel}

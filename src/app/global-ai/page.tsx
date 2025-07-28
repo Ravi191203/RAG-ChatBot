@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ChatPanel } from "@/components/chat-panel";
 import { Bot, Home, MessageSquare, Save, Sparkles } from 'lucide-react';
@@ -34,6 +34,8 @@ export default function GlobalAiPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("googleai/gemini-1.5-flash-latest");
   const { toast } = useToast();
+  const abortControllerRef = useRef<AbortController | null>(null);
+
 
   useEffect(() => {
     const id = getSessionId();
@@ -69,6 +71,9 @@ export default function GlobalAiPage() {
     setIsResponding(true);
 
     try {
+       const controller = new AbortController();
+       abortControllerRef.current = controller;
+
        const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -76,6 +81,7 @@ export default function GlobalAiPage() {
         },
         // We pass `knowledge: ""` to signal to the API this is a general chat
         body: JSON.stringify({ knowledge: "", sessionId, history: newMessages, question, model: selectedModel }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -87,7 +93,15 @@ export default function GlobalAiPage() {
 
       const assistantMessage: ChatMessage = { role: "assistant", content: result.answer };
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.log("Request aborted by user.");
+             const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage.role === 'user') {
+                setMessages(prev => prev.slice(0, -1));
+            }
+            return;
+        }
       console.error(error);
       const errorMessage: ChatMessage = {
         role: "assistant",
@@ -101,6 +115,14 @@ export default function GlobalAiPage() {
       });
     } finally {
       setIsResponding(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleStopGenerating = () => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        setIsResponding(false);
     }
   };
 
@@ -155,6 +177,7 @@ export default function GlobalAiPage() {
               onSendMessage={handleSendMessage}
               onRegenerate={handleRegenerateResponse}
               isResponding={isResponding}
+              onStopGenerating={handleStopGenerating}
               onMessageSaved={onMessageSaved}
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}
