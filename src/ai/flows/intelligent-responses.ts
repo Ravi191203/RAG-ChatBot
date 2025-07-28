@@ -12,6 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
+import { configureGenkit } from 'genkit';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
@@ -43,10 +44,21 @@ const intelligentResponseFlow = ai.defineFlow(
   },
   async (input) => {
     const modelName = input.model || 'googleai/gemini-1.5-flash-latest';
-    const model = googleAI.model(modelName.replace('googleai/', ''));
+    
+    const makeRequest = async (apiKey: string | undefined) => {
+        // Dynamically configure a new Genkit instance with the provided API key
+        const dynamicAi = configureGenkit({
+            plugins: [googleAI({ apiKey })],
+            logLevel: 'silent',
+            telemetry: {
+                instrumentation: 'none',
+                logger: 'none',
+            },
+        });
 
-    try {
-        const result = await ai.generate({
+        const model = dynamicAi.model(modelName);
+
+        const result = await dynamicAi.generate({
             model,
             output: {
                 schema: IntelligentResponseOutputSchema,
@@ -67,18 +79,36 @@ Question:
 ${input.question}
 `,
         });
-        
+
         const output = result.output;
         if (!output) {
             throw new Error('The AI model returned an empty response.');
         }
         return output;
+    };
 
+    try {
+        // First, try with the primary API key
+        return await makeRequest(process.env.GEMINI_API_KEY);
     } catch (error: any) {
-        console.error(`Model ${modelName} failed.`, error);
-        throw new Error(
-        `The selected AI model (${modelName}) failed to respond. Details: ${error.message}`
-        );
+        // Check if the error is a rate limit error (statusCode 429)
+        if (error.cause?.status === 429 && process.env.GEMINI_BACKUP_API_KEY) {
+            console.warn("Primary API key failed with rate limit. Retrying with backup key.");
+            try {
+                // If it fails, try with the backup API key
+                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+            } catch (backupError: any) {
+                console.error(`Backup API key also failed for model ${modelName}.`, backupError);
+                throw new Error(
+                    `The selected AI model (${modelName}) and the backup both failed to respond. Details: ${backupError.message}`
+                );
+            }
+        } else {
+             console.error(`Model ${modelName} failed.`, error);
+             throw new Error(
+                `The selected AI model (${modelName}) failed to respond. Details: ${error.message}`
+            );
+        }
     }
   }
 );
