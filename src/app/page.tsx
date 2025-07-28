@@ -27,33 +27,32 @@ export default function Home() {
   const { user, logout } = useAuth();
 
 
-  const fetchLastKnowledge = async () => {
-    if (!user) return;
-    try {
-      const response = await fetch(`/api/knowledge?userId=${user.uid}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.knowledge && !sessionStorage.getItem("knowledgeBase")) {
-          setKnowledge(data.knowledge);
-          sessionStorage.setItem("knowledgeBase", data.knowledge);
-        }
-      }
-    } catch (error) {
-      console.error("Could not fetch last knowledge from DB", error);
-    }
-  };
-
-
   useEffect(() => {
-    // On page load, check if knowledge exists in session storage
+    const fetchLastKnowledge = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch(`/api/knowledge?userId=${user.uid}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Only set from DB if session storage is empty to avoid overwriting
+          if (data.knowledge && !sessionStorage.getItem("knowledgeBase")) {
+            setKnowledge(data.knowledge);
+            sessionStorage.setItem("knowledgeBase", data.knowledge);
+          }
+        }
+      } catch (error) {
+        console.error("Could not fetch last knowledge from DB", error);
+      }
+    };
+
+    // First, check session storage synchronously
     const storedKnowledge = sessionStorage.getItem("knowledgeBase");
     if (storedKnowledge) {
       setKnowledge(storedKnowledge);
     } else {
-        // If not in session, try fetching the last one from DB
-        fetchLastKnowledge();
+      // If not in session, then try fetching from DB
+      fetchLastKnowledge();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleExtractKnowledge = async (content: string) => {
