@@ -16,19 +16,8 @@ export type ChatMessage = {
   content: string;
 };
 
-// Generate a simple session ID
-const getSessionId = () => {
-  if (typeof window !== 'undefined') {
-    let sessionId = sessionStorage.getItem("chatSessionId");
-    if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      sessionStorage.setItem("chatSessionId", sessionId);
-    }
-    return sessionId;
-  }
-  return null;
-}
-
+// Function to generate a session ID
+const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
 export default function ChatPage() {
   const [knowledge, setKnowledge] = useState<string>("");
@@ -42,10 +31,14 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    const id = getSessionId();
-    setSessionId(id);
+    // Session and knowledge logic now runs only on the client
+    let currentSessionId = sessionStorage.getItem("chatSessionId");
+    if (!currentSessionId) {
+      currentSessionId = generateSessionId();
+      sessionStorage.setItem("chatSessionId", currentSessionId);
+    }
+    setSessionId(currentSessionId);
     
-    // Load state from session storage
     const storedKnowledge = sessionStorage.getItem("knowledgeBase");
     if (storedKnowledge) {
       setKnowledge(storedKnowledge);
