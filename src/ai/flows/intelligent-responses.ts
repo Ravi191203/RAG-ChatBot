@@ -36,7 +36,9 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const basePrompt = {
+const intelligentResponsePrompt = ai.definePrompt(
+  {
+    name: 'intelligentResponsePrompt',
     system: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
@@ -60,26 +62,6 @@ Your final output should be only the answer to the user's question, without any 
 -------------------------
 
 User Question: {{{question}}}`,
-}
-
-const flashPrompt = ai.definePrompt(
-  {
-    name: 'intelligentResponseFlashPrompt',
-    ...basePrompt,
-  },
-);
-
-const proPrompt = ai.definePrompt(
-  {
-    name: 'intelligentResponseProPrompt',
-    ...basePrompt,
-  },
-);
-
-const pro15Prompt = ai.definePrompt(
-  {
-    name: 'intelligentResponsePro15Prompt',
-    ...basePrompt,
   },
 );
 
@@ -95,26 +77,13 @@ const intelligentResponseFlow = ai.defineFlow(
     const model = googleAI.model(modelName as ModelReference<any>);
     
     try {
-        let response;
         const promptInput = { context: input.context, question: input.question };
-
-        switch (modelName) {
-            case 'googleai/gemini-pro':
-                response = await proPrompt(promptInput, { model });
-                break;
-            case 'googleai/gemini-1.5-pro-latest':
-                response = await pro15Prompt(promptInput, { model });
-                break;
-            case 'googleai/gemini-1.5-flash-latest':
-            default:
-                response = await flashPrompt(promptInput, { model });
-                break;
-        }
+        const { output } = await intelligentResponsePrompt(promptInput, { model });
         
-        if (!response.output) {
+        if (!output) {
             throw new Error('The AI model returned an empty response.');
         }
-        return response.output;
+        return output;
 
     } catch (error: any) {
       console.error(`Model ${modelName} failed.`, error);
