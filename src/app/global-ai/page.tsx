@@ -234,20 +234,20 @@ export default function GlobalAiPage() {
             )}
         </div>
       </header>
-       <main className="flex-1 flex flex-col items-center py-4 sm:py-6 md:py-8 overflow-y-auto">
-        <div className="w-full max-w-4xl flex-1 flex flex-col px-4">
-            <ChatPanel
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              onRegenerate={handleRegenerateResponse}
-              isResponding={isResponding}
-              onStopGenerating={handleStopGenerating}
-              onMessageSaved={onMessageSaved}
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-              title="Global AI Chat"
-              description="Ask me anything! I'm here to help with any topic."
-            />
+       <main className="flex-1 overflow-y-auto">
+        <div className="h-full max-w-4xl mx-auto flex flex-col">
+          <ChatPanel
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onRegenerate={handleRegenerateResponse}
+            isResponding={isResponding}
+            onStopGenerating={handleStopGenerating}
+            onMessageSaved={onMessageSaved}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            title="Global AI Chat"
+            description="Ask me anything! I'm here to help with any topic."
+          />
         </div>
       </main>
     </div>

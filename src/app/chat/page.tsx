@@ -245,21 +245,21 @@ export default function ChatPage() {
             )}
         </div>
       </header>
-       <main className="flex-1 flex flex-col items-center py-4 sm:py-6 md:py-8 overflow-y-auto">
-        <div className="w-full max-w-4xl flex-1 flex flex-col px-4">
-            <ChatPanel
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              onRegenerate={handleRegenerateResponse}
-              isResponding={isResponding}
-              onStopGenerating={handleStopGenerating}
-              knowledge={knowledge}
-              onMessageSaved={onMessageSaved}
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-              title="Contextual Chat"
-              description="Ask questions about the provided context."
-            />
+       <main className="flex-1 overflow-y-auto">
+        <div className="h-full max-w-4xl mx-auto flex flex-col">
+          <ChatPanel
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onRegenerate={handleRegenerateResponse}
+            isResponding={isResponding}
+            onStopGenerating={handleStopGenerating}
+            knowledge={knowledge}
+            onMessageSaved={onMessageSaved}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            title="Contextual Chat"
+            description="Ask questions about the provided context."
+          />
         </div>
       </main>
     </div>

@@ -159,33 +159,35 @@ export function ChatPanel({
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 p-0">
-        <ScrollArea className="h-full">
-          <ScrollAreaViewport ref={scrollAreaViewportRef} className="h-full">
-            <div className="space-y-6 p-4 sm:p-6">
-              {messages.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <p className="text-center text-muted-foreground">
-                    { isInputDisabled && knowledge !== undefined
-                      ? "First, provide a document on the home page."
-                      : "Ask a question to get started."}
-                  </p>
+      <CardContent className="flex-1 p-0 overflow-hidden">
+        <div className="relative h-full">
+            <ScrollArea className="absolute inset-0">
+              <ScrollAreaViewport ref={scrollAreaViewportRef} className="h-full">
+                <div className="space-y-6 p-4 sm:p-6">
+                  {messages.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      <p className="text-center text-muted-foreground">
+                        { isInputDisabled && knowledge !== undefined
+                          ? "First, provide a document on the home page."
+                          : "Ask a question to get started."}
+                      </p>
+                    </div>
+                  ) : (
+                    messages.map((msg, index) => (
+                      <ChatMessage 
+                        key={index} 
+                        message={msg} 
+                        isLastMessage={index === messages.length - 1}
+                        onRegenerate={onRegenerate}
+                        onMessageSaved={onMessageSaved}
+                     />
+                    ))
+                  )}
+                  {isResponding && <TypingIndicator />}
                 </div>
-              ) : (
-                messages.map((msg, index) => (
-                  <ChatMessage 
-                    key={index} 
-                    message={msg} 
-                    isLastMessage={index === messages.length - 1}
-                    onRegenerate={onRegenerate}
-                    onMessageSaved={onMessageSaved}
-                 />
-                ))
-              )}
-              {isResponding && <TypingIndicator />}
-            </div>
-          </ScrollAreaViewport>
-        </ScrollArea>
+              </ScrollAreaViewport>
+            </ScrollArea>
+        </div>
       </CardContent>
        <CardFooter className="pt-4 border-t bg-background/95 backdrop-blur-sm">
          <div className="flex w-full items-center space-x-2">
