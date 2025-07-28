@@ -56,13 +56,6 @@ Always strive to be helpful and provide a well-reasoned answer.
 
 User Question: {{{question}}}
 `,
-  retry: {
-    backoff: {
-      delay: 5000,
-      maxRetries: 3,
-      multiplier: 2,
-    },
-  },
 });
 
 const intelligentResponseFlow = ai.defineFlow(
