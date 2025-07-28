@@ -11,7 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FileUp, Loader2, MessageSquareText, Plus } from "lucide-react";
+import { FileUp, Loader2, MessageSquareText, Plus, Save } from "lucide-react";
 import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -270,7 +270,7 @@ export function KnowledgePanel({ onExtract, onStartDirectChat, knowledge, origin
                         disabled={!knowledge || isSaving || !user}
                         className="ml-4"
                     >
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save
                     </Button>
                 </div>
