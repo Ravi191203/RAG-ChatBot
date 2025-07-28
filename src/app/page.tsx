@@ -11,6 +11,17 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 export type ChatMessage = {
@@ -162,10 +173,26 @@ export default function Home() {
                         </Avatar>
                         <span className="text-sm font-medium hidden md:inline">{user.displayName}</span>
                     </div>
-                    <Button variant="outline" size="icon" onClick={logout} className="h-9 w-9">
-                        <LogOut className="h-4 w-4" />
-                        <span className="sr-only">Sign Out</span>
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-9 w-9">
+                          <LogOut className="h-4 w-4" />
+                          <span className="sr-only">Sign Out</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            You will be redirected to the login page.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={logout}>Sign Out</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             )}
         </div>
@@ -222,7 +249,7 @@ export default function Home() {
             <div className="group relative flex items-center gap-2">
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
                 <path d="M18.73 20.47l-3.56-3.57 2.1-2.1L20.83 18.37l-2.1 2.1zM5.27 3.53l3.56 3.57L6.73 9.2 3.17 5.63l2.1-2.1z" fill="#4285f4"></path>
-                <path d="M20.83 5.63L18.73 3.53l-2.1 2.1 2.1 2.1 2.1-2.1zM9.2 20.47l2.1-2.1-2.1-2.1L7.1 18.37l2.1 2.1z" fill="#34a853"></path>
+                <path d="M9.2 20.47l2.1-2.1-2.1-2.1L7.1 18.37l2.1 2.1z" fill="#34a853"></path>
                 <path d="M12 8.25A3.75 3.75 0 0 0 8.25 12 3.75 3.75 0 0 0 12 15.75a3.75 3.75 0 0 0 3.75-3.75A3.75 3.75 0 0 0 12 8.25z" fill="#fbbc05"></path>
                 <path d="M18.83 11.25a.75.75 0 0 0-.75.75c0 3.31-2.69 6-6 6a6.002 6.002 0 0 1-6-6 .75.75 0 0 0-1.5 0c0 4.14 3.36 7.5 7.5 7.5s7.5-3.36 7.5-7.5a.75.75 0 0 0-.75-.75z" fill="#ea4335"></path>
               </svg>

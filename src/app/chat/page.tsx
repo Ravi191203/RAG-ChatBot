@@ -9,6 +9,17 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 export type ChatMessage = {
@@ -199,10 +210,26 @@ export default function ChatPage() {
                         </Avatar>
                         <span className="text-sm font-medium hidden md:inline">{user.displayName}</span>
                     </div>
-                    <Button variant="outline" size="icon" onClick={logout} className="h-9 w-9">
-                        <LogOut className="h-4 w-4" />
-                        <span className="sr-only">Sign Out</span>
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-9 w-9">
+                          <LogOut className="h-4 w-4" />
+                          <span className="sr-only">Sign Out</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            You will be redirected to the login page.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={logout}>Sign Out</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             )}
         </div>
