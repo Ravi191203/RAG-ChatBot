@@ -32,11 +32,24 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
     try {
         if (!process.env.MONGODB_URI) {
-            // Return empty knowledge if DB is not set up, but also indicate what's saved.
-            return NextResponse.json({ knowledge: "", savedItems: [] });
+            return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
         }
     
         const { db } = await connectToDatabase();
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        // If an ID is provided, fetch a single item
+        if (id) {
+            if (!ObjectId.isValid(id)) {
+                return NextResponse.json({ error: 'Invalid Item ID' }, { status: 400 });
+            }
+            const item = await db.collection('knowledge_base').findOne({ _id: new ObjectId(id) });
+            if (!item) {
+                return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+            }
+            return NextResponse.json({ savedItem: item });
+        }
         
         // Fetch the most recent knowledge entry
         const lastKnowledge = await db.collection('knowledge_base').findOne(

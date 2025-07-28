@@ -15,7 +15,7 @@ import remarkGfm from "remark-gfm";
 import { CodeBlock } from "./code-block";
 import { format } from "date-fns";
 import { Button } from "./ui/button";
-import { Pencil, Trash2, Loader2, Camera, FileText } from "lucide-react";
+import { Pencil, Trash2, Loader2, Camera, FileText, Share2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -192,9 +192,30 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
     setIsEditDialogOpen(true);
   };
   
+  const handleShare = (id: string) => {
+    const url = `${window.location.origin}/share/${id}`;
+    navigator.clipboard.writeText(url).then(() => {
+        toast({
+            title: 'Link Copied',
+            description: 'Shareable link has been copied to your clipboard.',
+        });
+    }, (err) => {
+        console.error('Could not copy text: ', err);
+        toast({
+            title: 'Error',
+            description: 'Could not copy the link.',
+            variant: 'destructive',
+        });
+    });
+  };
+
   const SavedItemCard = ({ item, index }: { item: SavedItem, index: number }) => (
     <div key={item._id} ref={el => cardRefs.current[index] = el} className="p-4 rounded-md border bg-background relative group">
       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleShare(item._id)}>
+            <Share2 className="h-4 w-4" />
+            <span className="sr-only">Share</span>
+        </Button>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownloadTxt(item)}>
           <FileText className="h-4 w-4" />
           <span className="sr-only">Download as TXT</span>
@@ -261,7 +282,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
             </TabsList>
             
             <TabsContent value="knowledge" className="flex-1 m-0">
-               <ScrollArea className="h-[calc(100vh-20rem)] md:h-72 rounded-md border bg-muted/50">
+               <ScrollArea className="h-[calc(100vh-20rem)] md:h-[calc(100vh-22rem)] rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
                       {savedKnowledge.length > 0 ? savedKnowledge.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={index}/>
@@ -272,7 +293,7 @@ export function SavedItemsPanel({ savedItems, onItemDeleted, onItemUpdated }: Pr
               </ScrollArea>
             </TabsContent>
              <TabsContent value="chats" className="flex-1 m-0">
-               <ScrollArea className="h-[calc(100vh-20rem)] md:h-72 rounded-md border bg-muted/50">
+               <ScrollArea className="h-[calc(100vh-20rem)] md:h-[calc(100vh-22rem)] rounded-md border bg-muted/50">
                   <div className="p-4 space-y-4">
                       {savedChats.length > 0 ? savedChats.map((item, index) => (
                           <SavedItemCard key={item._id} item={item} index={savedKnowledge.length + index} />
