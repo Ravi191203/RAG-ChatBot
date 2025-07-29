@@ -35,16 +35,7 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const intelligentResponseFlow = ai.defineFlow(
-  {
-    name: 'intelligentResponseFlow',
-    inputSchema: IntelligentResponseInputSchema,
-    outputSchema: IntelligentResponseOutputSchema,
-  },
-  async (input) => {
-    const modelName = input.model || 'gemini-1.5-flash-latest';
-
-    const intelligentResponsePrompt = (client: typeof ai) => client.definePrompt({
+const intelligentResponsePrompt = (client: typeof ai, modelName: string) => client.definePrompt({
       name: 'intelligentResponsePrompt',
       input: {schema: IntelligentResponseInputSchema},
       output: {schema: IntelligentResponseOutputSchema},
@@ -66,8 +57,17 @@ Question:
       model: modelName
     });
 
+const intelligentResponseFlow = ai.defineFlow(
+  {
+    name: 'intelligentResponseFlow',
+    inputSchema: IntelligentResponseInputSchema,
+    outputSchema: IntelligentResponseOutputSchema,
+  },
+  async (input) => {
+    const modelName = input.model || 'gemini-pro';
+    
     try {
-        const primaryPrompt = intelligentResponsePrompt(ai);
+        const primaryPrompt = intelligentResponsePrompt(ai, modelName);
         const { output } = await primaryPrompt(input);
         if (!output) {
           throw new Error(`The selected AI model (${modelName}) failed to respond.`);
@@ -77,7 +77,7 @@ Question:
         console.warn("Primary API key failed. Trying backup key.", error.message);
         if (process.env.GEMINI_BACKUP_API_KEY) {
             try {
-                const backupPrompt = intelligentResponsePrompt(backupAi);
+                const backupPrompt = intelligentResponsePrompt(backupAi, modelName);
                 const { output } = await backupPrompt(input);
                 if (!output) {
                      throw new Error(`The selected AI model (${modelName}) and the backup both failed to respond.`);

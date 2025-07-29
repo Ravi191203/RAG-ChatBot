@@ -29,15 +29,7 @@ export async function generateTitle(input: GenerateTitleInput): Promise<Generate
   return generateTitleFlow(input);
 }
 
-const generateTitleFlow = ai.defineFlow(
-  {
-    name: 'generateTitleFlow',
-    inputSchema: GenerateTitleInputSchema,
-    outputSchema: GenerateTitleOutputSchema,
-  },
-  async input => {
-    
-    const generateTitlePrompt = (client: typeof ai) => client.definePrompt({
+const generateTitlePrompt = (client: typeof ai) => client.definePrompt({
       name: 'generateTitlePrompt',
       input: {schema: GenerateTitleInputSchema},
       output: {schema: GenerateTitleOutputSchema},
@@ -47,9 +39,17 @@ Content:
 {{{content}}}
 
 Your Title:`,
-      model: 'gemini-1.5-flash-latest',
+      model: 'gemini-pro',
     });
 
+const generateTitleFlow = ai.defineFlow(
+  {
+    name: 'generateTitleFlow',
+    inputSchema: GenerateTitleInputSchema,
+    outputSchema: GenerateTitleOutputSchema,
+  },
+  async input => {
+    
     try {
         const primaryPrompt = generateTitlePrompt(ai);
         const {output} = await primaryPrompt(input);

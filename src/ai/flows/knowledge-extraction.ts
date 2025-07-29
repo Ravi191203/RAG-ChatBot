@@ -33,15 +33,7 @@ export async function extractKnowledge(
   return extractKnowledgeFlow(input);
 }
 
-const extractKnowledgeFlow = ai.defineFlow(
-  {
-    name: 'extractKnowledgeFlow',
-    inputSchema: ExtractKnowledgeInputSchema,
-    outputSchema: ExtractKnowledgeOutputSchema,
-  },
-  async input => {
-
-    const extractKnowledgePrompt = (client: typeof ai) => client.definePrompt({
+const extractKnowledgePrompt = (client: typeof ai) => client.definePrompt({
         name: 'extractKnowledgePrompt',
         input: { schema: ExtractKnowledgeInputSchema },
         output: { schema: ExtractKnowledgeOutputSchema },
@@ -56,8 +48,16 @@ Your final output should be only the extracted knowledge, without any preamble o
 Content:
 {{{content}}}
 `,
-      model: 'gemini-1.5-flash-latest',
+      model: 'gemini-pro',
     });
+
+const extractKnowledgeFlow = ai.defineFlow(
+  {
+    name: 'extractKnowledgeFlow',
+    inputSchema: ExtractKnowledgeInputSchema,
+    outputSchema: ExtractKnowledgeOutputSchema,
+  },
+  async input => {
 
      try {
         const primaryPrompt = extractKnowledgePrompt(ai);

@@ -35,16 +35,7 @@ export async function classifyImage(input: ClassifyImageInput): Promise<Classify
   return classifyImageFlow(input);
 }
 
-
-const classifyImageFlow = ai.defineFlow(
-  {
-    name: 'classifyImageFlow',
-    inputSchema: ClassifyImageInputSchema,
-    outputSchema: ClassifyImageOutputSchema,
-  },
-  async (input) => {
-    
-    const classifyImagePrompt = (client: typeof ai) => client.definePrompt({
+const classifyImagePrompt = (client: typeof ai) => client.definePrompt({
       name: 'classifyImagePrompt',
       input: { schema: ClassifyImageInputSchema },
       output: { schema: ClassifyImageOutputSchema },
@@ -57,8 +48,16 @@ const classifyImageFlow = ai.defineFlow(
 Your response must follow the structured output format.
 
 Image: {{media url=imageDataUri}}`,
-      model: 'gemini-1.5-flash-latest',
+      model: 'gemini-pro-vision',
     });
+
+const classifyImageFlow = ai.defineFlow(
+  {
+    name: 'classifyImageFlow',
+    inputSchema: ClassifyImageInputSchema,
+    outputSchema: ClassifyImageOutputSchema,
+  },
+  async (input) => {
     
     try {
         const primaryPrompt = classifyImagePrompt(ai);
