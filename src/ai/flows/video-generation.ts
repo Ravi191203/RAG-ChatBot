@@ -14,6 +14,7 @@ import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { logger } from 'genkit/logging';
 import { startGenerate } from 'genkit/model';
+import { configureGenkit } from 'genkit';
 
 
 const GenerateVideoInputSchema = z.object({
@@ -54,23 +55,40 @@ const generateVideoFlow = ai.defineFlow(
     },
     async (input) => {
         logger.info("Starting video generation flow for prompt:", input.prompt);
-        const model = googleAI.model('veo-2.0-generate-001');
-
-        const { operation } = await startGenerate({
-            model,
-            prompt: input.prompt,
-            config: {
-                durationSeconds: Math.max(5, Math.min(8, input.duration || 5)),
-                aspectRatio: '16:9',
-            },
-        });
         
-        if (!operation?.name) {
-            return { done: true, error: "Failed to start video generation operation." };
+        const makeRequest = async (apiKey?: string) => {
+            if (apiKey) {
+                configureGenkit({ plugins: [googleAI({ apiKey })] });
+            }
+            const model = googleAI.model('veo-2.0-generate-001');
+            const { operation } = await startGenerate({
+                model,
+                prompt: input.prompt,
+                config: {
+                    durationSeconds: Math.max(5, Math.min(8, input.duration || 5)),
+                    aspectRatio: '16:9',
+                },
+            });
+            
+            if (!operation?.name) {
+                throw new Error("Failed to start video generation operation.");
+            }
+            return { operationName: operation.name, done: false };
+        };
+        
+        try {
+            return await makeRequest(process.env.GEMINI_API_KEY);
+        } catch (error: any) {
+            console.warn("Primary API key for video generation failed. Trying backup.", error.message);
+            if (process.env.GEMINI_BACKUP_API_KEY) {
+                try {
+                    return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+                } catch (backupError: any) {
+                    return { done: true, error: `Video generation failed to start on both keys. Details: ${backupError.message}` };
+                }
+            }
+            return { done: true, error: `Video generation failed to start. Details: ${error.message}` };
         }
-
-        logger.info("Video generation operation started:", operation.name);
-        return { operationName: operation.name, done: false };
     }
 );
 
@@ -83,7 +101,14 @@ const checkVideoStatusFlow = ai.defineFlow(
     },
     async (input) => {
         logger.info("Checking status for operation:", input.operationName);
-        try {
+        
+        const makeRequest = async (apiKey?: string) => {
+            let keyToUse = apiKey || process.env.GEMINI_API_KEY;
+
+            if (apiKey) {
+                 configureGenkit({ plugins: [googleAI({ apiKey })] });
+            }
+            
             let operation = await ai.checkOperation({ name: input.operationName });
 
             if (!operation) {
@@ -109,7 +134,7 @@ const checkVideoStatusFlow = ai.defineFlow(
                 const fetch = (await import('node-fetch')).default;
                 let videoResponse;
                
-                videoResponse = await fetch(`${video.media.url}&key=${process.env.GEMINI_API_KEY}`);
+                videoResponse = await fetch(`${video.media.url}&key=${keyToUse}`);
                 
                 if (!videoResponse.ok) {
                     throw new Error(`Failed to download video: ${videoResponse.statusText}`);
@@ -130,12 +155,25 @@ const checkVideoStatusFlow = ai.defineFlow(
                 operationName: operation.name,
                 done: false,
             };
+        };
 
+        try {
+            return await makeRequest(process.env.GEMINI_API_KEY);
         } catch (error: any) {
-             logger.error("Error in checkVideoStatusFlow:", error);
-             return {
+            logger.error("Error checking video status with primary key:", error);
+            if (process.env.GEMINI_BACKUP_API_KEY) {
+                try {
+                    return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+                } catch (backupError: any) {
+                    return {
+                        done: true,
+                        error: `Failed to check video status with both keys. Details: ${backupError.message}`
+                    };
+                }
+            }
+            return {
                 done: true,
-                error: error.message || "An unknown error occurred while checking status.",
+                error: `Failed to check video status. Details: ${error.message}`
             };
         }
     }

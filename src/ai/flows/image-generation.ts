@@ -12,6 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
+import { configureGenkit } from 'genkit';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate an image from.'),
@@ -34,21 +35,43 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    const model = googleAI.model('gemini-2.0-flash-preview-image-generation');
-    const { media } = await ai.generate({
-        model,
-        prompt: input.prompt,
-        config: {
-            responseModalities: ['TEXT', 'IMAGE'],
-        },
-    });
-
-    if (!media?.url) {
-      throw new Error('Image generation failed to produce an image.');
-    }
     
-    return {
-      imageUrl: media.url,
-    };
+    const makeRequest = async (apiKey?: string) => {
+      if (apiKey) {
+          configureGenkit({
+            plugins: [googleAI({ apiKey })],
+          });
+      }
+      const model = googleAI.model('gemini-2.0-flash-preview-image-generation');
+      const { media } = await ai.generate({
+          model,
+          prompt: input.prompt,
+          config: {
+              responseModalities: ['TEXT', 'IMAGE'],
+          },
+      });
+
+      if (!media?.url) {
+        throw new Error('Image generation failed to produce an image.');
+      }
+      
+      return {
+        imageUrl: media.url,
+      };
+    }
+
+    try {
+        return await makeRequest(process.env.GEMINI_API_KEY);
+    } catch (error: any) {
+        console.warn("Primary API key failed. Trying backup key.", error.message);
+        if (process.env.GEMINI_BACKUP_API_KEY) {
+            try {
+                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+            } catch (backupError: any) {
+                 throw new Error(`Image generation failed on both primary and backup keys. Details: ${backupError.message}`);
+            }
+        }
+        throw new Error(`Image generation failed. Details: ${error.message}`);
+    }
   }
 );

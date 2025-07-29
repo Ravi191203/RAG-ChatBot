@@ -13,6 +13,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import wav from 'wav';
+import { configureGenkit } from 'genkit';
 
 const GenerateSpeechInputSchema = z.object({
   text: z.string().describe('The text to convert to speech.'),
@@ -60,31 +61,53 @@ const generateSpeechFlow = ai.defineFlow(
     outputSchema: GenerateSpeechOutputSchema,
   },
   async (input) => {
-    const model = googleAI.model('gemini-2.5-flash-preview-tts');
-    const { media } = await ai.generate({
-      model,
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Algenib' },
+    
+    const makeRequest = async (apiKey?: string) => {
+        if (apiKey) {
+            configureGenkit({
+                plugins: [googleAI({ apiKey })],
+            });
+        }
+        const model = googleAI.model('gemini-2.5-flash-preview-tts');
+        const { media } = await ai.generate({
+          model,
+          config: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: 'Algenib' },
+              },
+            },
           },
-        },
-      },
-      prompt: input.text,
-    });
+          prompt: input.text,
+        });
 
-    if (!media) {
-      throw new Error('no media returned');
+        if (!media) {
+          throw new Error('no media returned');
+        }
+        const audioBuffer = Buffer.from(
+          media.url.substring(media.url.indexOf(',') + 1),
+          'base64'
+        );
+        const wavData = await toWav(audioBuffer);
+
+        return {
+          audio: 'data:audio/wav;base64,' + wavData,
+        };
     }
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-    const wavData = await toWav(audioBuffer);
 
-    return {
-      audio: 'data:audio/wav;base64,' + wavData,
-    };
+    try {
+        return await makeRequest(process.env.GEMINI_API_KEY);
+    } catch (error: any) {
+        console.warn("Primary API key for TTS failed. Trying backup key.", error.message);
+        if (process.env.GEMINI_BACKUP_API_KEY) {
+            try {
+                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+            } catch (backupError: any) {
+                 throw new Error(`TTS failed on both keys. Details: ${backupError.message}`);
+            }
+        }
+        throw new Error(`TTS failed. Details: ${error.message}`);
+    }
   }
 );

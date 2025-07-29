@@ -12,6 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
+import { configureGenkit } from 'genkit';
 
 const GenerateTitleInputSchema = z.object({
   content: z.string().describe('The content to generate a title for.'),
@@ -36,25 +37,47 @@ const generateTitleFlow = ai.defineFlow(
     outputSchema: GenerateTitleOutputSchema,
   },
   async input => {
-    const model = googleAI.model('gemini-1.5-flash-latest');
+    
+    const makeRequest = async (apiKey?: string) => {
+        if (apiKey) {
+            configureGenkit({
+                plugins: [googleAI({ apiKey })],
+            });
+        }
+        const model = googleAI.model('gemini-1.5-flash-latest');
 
-    const prompt = ai.definePrompt({
-      name: 'generateTitlePrompt',
-      input: {schema: GenerateTitleInputSchema},
-      output: {schema: GenerateTitleOutputSchema},
-      prompt: `You are an expert in summarizing content. Your task is to generate a short, descriptive title (maximum 5 words) for the following content. The title should capture the main topic of the text.
+        const prompt = ai.definePrompt({
+          name: 'generateTitlePrompt',
+          input: {schema: GenerateTitleInputSchema},
+          output: {schema: GenerateTitleOutputSchema},
+          prompt: `You are an expert in summarizing content. Your task is to generate a short, descriptive title (maximum 5 words) for the following content. The title should capture the main topic of the text.
 
 Content:
 {{{content}}}
 
 Your Title:`,
-      model,
-    });
+          model,
+        });
 
-    const {output} = await prompt(input);
-    if (!output) {
-        throw new Error("The AI model failed to respond.");
+        const {output} = await prompt(input);
+        if (!output) {
+            throw new Error("The AI model failed to respond.");
+        }
+        return output;
     }
-    return output;
+
+    try {
+        return await makeRequest(process.env.GEMINI_API_KEY);
+    } catch (error: any) {
+        console.warn("Primary API key failed. Trying backup key.", error.message);
+        if (process.env.GEMINI_BACKUP_API_KEY) {
+            try {
+                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+            } catch (backupError: any) {
+                 throw new Error(`Title generation failed on both keys. Details: ${backupError.message}`);
+            }
+        }
+        throw new Error(`Title generation failed. Details: ${error.message}`);
+    }
   }
 );

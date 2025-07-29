@@ -12,12 +12,13 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
+import { configureGenkit } from 'genkit';
 
 const ClassifyImageInputSchema = z.object({
   imageDataUri: z
     .string()
     .describe(
-      "An image to classify, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
+      "An image to classify, as a a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
 });
 export type ClassifyImageInput = z.infer<typeof ClassifyImageInputSchema>;
@@ -45,7 +46,7 @@ const classifyImageFlow = ai.defineFlow(
   async (input) => {
     const model = googleAI.model('gemini-1.5-flash-latest');
     
-    const prompt = ai.definePrompt({
+    const classifyImagePrompt = ai.definePrompt({
       name: 'classifyImagePrompt',
       input: { schema: ClassifyImageInputSchema },
       output: { schema: ClassifyImageOutputSchema },
@@ -61,10 +62,31 @@ Image: {{media url=imageDataUri}}`,
       model,
     });
     
-    const { output } = await prompt(input);
-    if (!output) {
-      throw new Error("The AI model failed to respond.");
+    const makeRequest = async (apiKey?: string) => {
+      if (apiKey) {
+        configureGenkit({
+          plugins: [googleAI({ apiKey })],
+        });
+      }
+      const { output } = await classifyImagePrompt(input);
+      if (!output) {
+        throw new Error("The AI model failed to respond.");
+      }
+      return output;
     }
-    return output;
+
+    try {
+        return await makeRequest(process.env.GEMINI_API_KEY);
+    } catch (error: any) {
+        console.warn("Primary API key failed. Trying backup key.", error.message);
+        if (process.env.GEMINI_BACKUP_API_KEY) {
+            try {
+                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+            } catch (backupError: any) {
+                 throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+            }
+        }
+        throw new Error(`The AI model failed to respond. Details: ${error.message}`);
+    }
   }
 );
