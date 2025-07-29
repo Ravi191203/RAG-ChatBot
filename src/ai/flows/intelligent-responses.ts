@@ -107,8 +107,5 @@ const intelligentResponseFlow = ai.defineFlow(
             );
         }
     }
-    // This line should not be reachable if a response or an error is always returned.
-    // Added to satisfy TypeScript's need for a return statement at the end of the function.
-    throw new Error('No response from AI model after all attempts.');
   }
 );

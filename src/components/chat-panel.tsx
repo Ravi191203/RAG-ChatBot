@@ -126,7 +126,6 @@ export function ChatPanel({
   const geminiModels = [
     { value: "gemini-1.5-flash-latest", label: "Gemini 1.5 Flash" },
     { value: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro" },
-    { value: "gemini-pro", label: "Gemini Pro" },
   ];
 
   return (
