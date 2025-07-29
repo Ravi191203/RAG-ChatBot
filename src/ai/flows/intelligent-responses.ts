@@ -9,7 +9,7 @@
  * - IntelligentResponseOutput - The return type for the intelligentResponse function.
  */
 
-import {ai, backupAi} from '@/ai/genkit';
+import {ai, backupAi, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const IntelligentResponseInputSchema = z.object({
@@ -54,7 +54,7 @@ Context:
 Question:
 {{{question}}}
 `,
-      model: modelName,
+      model: googleAI.model(modelName),
     });
 
 const intelligentResponseFlow = ai.defineFlow(

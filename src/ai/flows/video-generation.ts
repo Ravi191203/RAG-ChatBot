@@ -9,7 +9,7 @@
  * - GenerateVideoOutput - The return type for the generateVideo function.
  */
 
-import { ai, backupAi } from '@/ai/genkit';
+import { ai, backupAi, googleAI } from '@/ai/genkit';
 import { z } from 'genkit';
 import { logger } from 'genkit/logging';
 import { startGenerate } from 'genkit/model';
@@ -57,7 +57,7 @@ const generateVideoFlow = ai.defineFlow(
         
         const makeRequest = async (client: typeof ai) => {
             const { operation } = await startGenerate({
-                model: 'veo-2.0-generate-001',
+                model: googleAI.model('veo-2.0-generate-001'),
                 prompt: input.prompt,
                 config: {
                     durationSeconds: Math.max(5, Math.min(8, input.duration || 5)),

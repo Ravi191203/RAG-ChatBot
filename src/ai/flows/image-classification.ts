@@ -9,7 +9,7 @@
  * - ClassifyImageOutput - The return type for the classifyImage function.
  */
 
-import { ai, backupAi } from '@/ai/genkit';
+import { ai, backupAi, googleAI } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const ClassifyImageInputSchema = z.object({
@@ -48,7 +48,7 @@ const classifyImagePrompt = (client: typeof ai) => client.definePrompt({
 Your response must follow the structured output format.
 
 Image: {{media url=imageDataUri}}`,
-      model: 'gemini-pro-vision',
+      model: googleAI.model('gemini-pro-vision'),
     });
 
 const classifyImageFlow = ai.defineFlow(

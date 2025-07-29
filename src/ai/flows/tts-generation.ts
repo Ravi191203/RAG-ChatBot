@@ -9,7 +9,7 @@
  * - GenerateSpeechOutput - The return type for the generateSpeech function.
  */
 
-import { ai, backupAi } from '@/ai/genkit';
+import { ai, backupAi, googleAI } from '@/ai/genkit';
 import { z } from 'genkit';
 import wav from 'wav';
 
@@ -63,7 +63,7 @@ const generateSpeechFlow = ai.defineFlow(
     
     const makeRequest = async (client: typeof ai) => {
         const { media } = await client.generate({
-          model: 'gemini-2.5-flash-preview-tts',
+          model: googleAI.model('gemini-2.5-flash-preview-tts'),
           config: {
             responseModalities: ['AUDIO'],
             speechConfig: {

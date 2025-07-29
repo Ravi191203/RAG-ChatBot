@@ -9,7 +9,7 @@
  * - GenerateTitleOutput - The return type for the generateTitle function.
  */
 
-import {ai, backupAi} from '@/ai/genkit';
+import {ai, backupAi, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateTitleInputSchema = z.object({
@@ -39,7 +39,7 @@ Content:
 {{{content}}}
 
 Your Title:`,
-      model: 'gemini-1.5-flash-latest',
+      model: googleAI.model('gemini-1.5-flash-latest'),
     });
 
 const generateTitleFlow = ai.defineFlow(

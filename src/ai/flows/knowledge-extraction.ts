@@ -9,7 +9,7 @@
  * - ExtractKnowledgeOutput - The return type for the extractKnowledge function.
  */
 
-import {ai, backupAi} from '@/ai/genkit';
+import {ai, backupAi, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ExtractKnowledgeInputSchema = z.object({
@@ -48,7 +48,7 @@ Your final output should be only the extracted knowledge, without any preamble o
 Content:
 {{{content}}}
 `,
-      model: 'gemini-1.5-flash-latest',
+      model: googleAI.model('gemini-1.5-flash-latest'),
     });
 
 const extractKnowledgeFlow = ai.defineFlow(
