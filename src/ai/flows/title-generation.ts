@@ -39,7 +39,7 @@ Content:
 {{{content}}}
 
 Your Title:`,
-      model: 'gemini-pro',
+      model: 'gemini-1.5-flash-latest',
     });
 
 const generateTitleFlow = ai.defineFlow(

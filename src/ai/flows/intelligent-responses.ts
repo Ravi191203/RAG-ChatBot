@@ -54,7 +54,7 @@ Context:
 Question:
 {{{question}}}
 `,
-      model: modelName
+      model: modelName,
     });
 
 const intelligentResponseFlow = ai.defineFlow(
@@ -64,7 +64,7 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const modelName = input.model || 'gemini-pro';
+    const modelName = input.model || 'gemini-1.5-flash-latest';
     
     try {
         const primaryPrompt = intelligentResponsePrompt(ai, modelName);
