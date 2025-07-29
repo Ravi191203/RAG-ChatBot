@@ -9,10 +9,8 @@
  * - GenerateTitleOutput - The return type for the generateTitle function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, backupAi} from '@/ai/genkit';
 import {z} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
-import { configureGenkit } from 'genkit';
 
 const GenerateTitleInputSchema = z.object({
   content: z.string().describe('The content to generate a title for.'),
@@ -23,6 +21,7 @@ const GenerateTitleOutputSchema = z.object({
   title: z
     .string()
     .describe('A concise, descriptive title for the content (max 5 words).'),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional().describe('The API key that was used for the response.'),
 });
 export type GenerateTitleOutput = z.infer<typeof GenerateTitleOutputSchema>;
 
@@ -38,41 +37,36 @@ const generateTitleFlow = ai.defineFlow(
   },
   async input => {
     
-    const makeRequest = async (apiKey?: string) => {
-        if (apiKey) {
-            configureGenkit({
-                plugins: [googleAI({ apiKey })],
-            });
-        }
-        const model = googleAI.model('gemini-1.5-flash-latest');
-
-        const prompt = ai.definePrompt({
-          name: 'generateTitlePrompt',
-          input: {schema: GenerateTitleInputSchema},
-          output: {schema: GenerateTitleOutputSchema},
-          prompt: `You are an expert in summarizing content. Your task is to generate a short, descriptive title (maximum 5 words) for the following content. The title should capture the main topic of the text.
+    const generateTitlePrompt = (client: typeof ai) => client.definePrompt({
+      name: 'generateTitlePrompt',
+      input: {schema: GenerateTitleInputSchema},
+      output: {schema: GenerateTitleOutputSchema},
+      prompt: `You are an expert in summarizing content. Your task is to generate a short, descriptive title (maximum 5 words) for the following content. The title should capture the main topic of the text.
 
 Content:
 {{{content}}}
 
 Your Title:`,
-          model,
-        });
+      model: 'gemini-1.5-flash-latest',
+    });
 
-        const {output} = await prompt(input);
+    try {
+        const primaryPrompt = generateTitlePrompt(ai);
+        const {output} = await primaryPrompt(input);
         if (!output) {
             throw new Error("The AI model failed to respond.");
         }
-        return output;
-    }
-
-    try {
-        return await makeRequest(process.env.GEMINI_API_KEY);
+        return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.warn("Primary API key failed. Trying backup key.", error.message);
+        console.warn("Primary API key failed for title generation. Trying backup key.", error.message);
         if (process.env.GEMINI_BACKUP_API_KEY) {
             try {
-                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+                const backupPrompt = generateTitlePrompt(backupAi);
+                const {output} = await backupPrompt(input);
+                if (!output) {
+                    throw new Error("Title generation failed on both keys.");
+                }
+                return { ...output, apiKeyUsed: 'backup' };
             } catch (backupError: any) {
                  throw new Error(`Title generation failed on both keys. Details: ${backupError.message}`);
             }

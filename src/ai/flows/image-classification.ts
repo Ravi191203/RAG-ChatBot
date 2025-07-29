@@ -9,10 +9,8 @@
  * - ClassifyImageOutput - The return type for the classifyImage function.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, backupAi } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
-import { configureGenkit } from 'genkit';
 
 const ClassifyImageInputSchema = z.object({
   imageDataUri: z
@@ -28,6 +26,7 @@ const ClassifyImageOutputSchema = z.object({
   classification: z.string().describe('The most specific classification for the main subject of the image (e.g., "Golden Retriever", "Eiffel Tower").'),
   description: z.string().describe('A detailed, step-by-step description of the image, covering the subject, setting, colors, and any actions.'),
   extractedText: z.string().optional().describe('Any and all text found within the image. If no text is present, this should be an empty string or omitted.'),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional().describe('The API key that was used for the response.'),
 });
 export type ClassifyImageOutput = z.infer<typeof ClassifyImageOutputSchema>;
 
@@ -44,9 +43,8 @@ const classifyImageFlow = ai.defineFlow(
     outputSchema: ClassifyImageOutputSchema,
   },
   async (input) => {
-    const model = googleAI.model('gemini-1.5-flash-latest');
     
-    const classifyImagePrompt = ai.definePrompt({
+    const classifyImagePrompt = (client: typeof ai) => client.definePrompt({
       name: 'classifyImagePrompt',
       input: { schema: ClassifyImageInputSchema },
       output: { schema: ClassifyImageOutputSchema },
@@ -59,29 +57,26 @@ const classifyImageFlow = ai.defineFlow(
 Your response must follow the structured output format.
 
 Image: {{media url=imageDataUri}}`,
-      model,
+      model: 'gemini-1.5-flash-latest',
     });
     
-    const makeRequest = async (apiKey?: string) => {
-      if (apiKey) {
-        configureGenkit({
-          plugins: [googleAI({ apiKey })],
-        });
-      }
-      const { output } = await classifyImagePrompt(input);
-      if (!output) {
-        throw new Error("The AI model failed to respond.");
-      }
-      return output;
-    }
-
     try {
-        return await makeRequest(process.env.GEMINI_API_KEY);
+        const primaryPrompt = classifyImagePrompt(ai);
+        const { output } = await primaryPrompt(input);
+        if (!output) {
+          throw new Error("The AI model failed to respond.");
+        }
+        return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.warn("Primary API key failed. Trying backup key.", error.message);
+        console.warn("Primary API key failed for image classification. Trying backup key.", error.message);
         if (process.env.GEMINI_BACKUP_API_KEY) {
             try {
-                return await makeRequest(process.env.GEMINI_BACKUP_API_KEY);
+                const backupPrompt = classifyImagePrompt(backupAi);
+                const { output } = await backupPrompt(input);
+                 if (!output) {
+                    throw new Error("The AI model and the backup both failed to respond.");
+                }
+                return { ...output, apiKeyUsed: 'backup' };
             } catch (backupError: any) {
                  throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
             }

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       model: model,
     });
 
-    return NextResponse.json({answer: result.answer});
+    return NextResponse.json(result);
 
   } catch (error: any) {
     console.error('Error in chat API:', error);
