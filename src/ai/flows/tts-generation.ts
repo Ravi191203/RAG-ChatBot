@@ -9,7 +9,7 @@
  * - GenerateSpeechOutput - The return type for the generateSpeech function.
  */
 
-import { ai, backupAi, googleAI } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { z } from 'genkit';
 import wav from 'wav';
 
@@ -20,7 +20,6 @@ export type GenerateSpeechInput = z.infer<typeof GenerateSpeechInputSchema>;
 
 const GenerateSpeechOutputSchema = z.object({
   audio: z.string().describe("The generated audio as a base64-encoded WAV data URI."),
-  apiKeyUsed: z.enum(['primary', 'backup']).optional().describe('The API key that was used for the response.'),
 });
 export type GenerateSpeechOutput = z.infer<typeof GenerateSpeechOutputSchema>;
 
@@ -61,8 +60,8 @@ const generateSpeechFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const makeRequest = async (client: typeof ai) => {
-        const { media } = await client.generate({
+    try {
+        const { media } = await ai.generate({
           model: googleAI.model('gemini-2.5-flash-preview-tts'),
           config: {
             responseModalities: ['AUDIO'],
@@ -87,21 +86,8 @@ const generateSpeechFlow = ai.defineFlow(
         return {
           audio: 'data:audio/wav;base64,' + wavData,
         };
-    }
-
-    try {
-        const result = await makeRequest(ai);
-        return { ...result, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.warn("Primary API key for TTS failed. Trying backup key.", error.message);
-        if (process.env.GEMINI_BACKUP_API_KEY) {
-            try {
-                const result = await makeRequest(backupAi);
-                return { ...result, apiKeyUsed: 'backup' };
-            } catch (backupError: any) {
-                 throw new Error(`TTS failed on both keys. Details: ${backupError.message}`);
-            }
-        }
+        console.error("TTS failed.", error.message);
         throw new Error(`TTS failed. Details: ${error.message}`);
     }
   }

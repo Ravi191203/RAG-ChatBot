@@ -9,7 +9,7 @@
  * - GenerateTitleOutput - The return type for the generateTitle function.
  */
 
-import {ai, backupAi, googleAI} from '@/ai/genkit';
+import {ai, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateTitleInputSchema = z.object({
@@ -21,7 +21,6 @@ const GenerateTitleOutputSchema = z.object({
   title: z
     .string()
     .describe('A concise, descriptive title for the content (max 5 words).'),
-  apiKeyUsed: z.enum(['primary', 'backup']).optional().describe('The API key that was used for the response.'),
 });
 export type GenerateTitleOutput = z.infer<typeof GenerateTitleOutputSchema>;
 
@@ -29,7 +28,7 @@ export async function generateTitle(input: GenerateTitleInput): Promise<Generate
   return generateTitleFlow(input);
 }
 
-const generateTitlePrompt = (client: typeof ai) => client.definePrompt({
+const generateTitlePrompt = ai.definePrompt({
       name: 'generateTitlePrompt',
       input: {schema: GenerateTitleInputSchema},
       output: {schema: GenerateTitleOutputSchema},
@@ -51,26 +50,13 @@ const generateTitleFlow = ai.defineFlow(
   async input => {
     
     try {
-        const primaryPrompt = generateTitlePrompt(ai);
-        const {output} = await primaryPrompt(input);
+        const {output} = await generateTitlePrompt(input);
         if (!output) {
             throw new Error("The AI model failed to respond.");
         }
-        return { ...output, apiKeyUsed: 'primary' };
+        return output;
     } catch (error: any) {
-        console.warn("Primary API key failed for title generation. Trying backup key.", error.message);
-        if (process.env.GEMINI_BACKUP_API_KEY) {
-            try {
-                const backupPrompt = generateTitlePrompt(backupAi);
-                const {output} = await backupPrompt(input);
-                if (!output) {
-                    throw new Error("Title generation failed on both keys.");
-                }
-                return { ...output, apiKeyUsed: 'backup' };
-            } catch (backupError: any) {
-                 throw new Error(`Title generation failed on both keys. Details: ${backupError.message}`);
-            }
-        }
+        console.error("Title generation failed.", error.message);
         throw new Error(`Title generation failed. Details: ${error.message}`);
     }
   }

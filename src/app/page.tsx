@@ -83,10 +83,7 @@ export default function Home() {
 
     try {
       const result = await extractKnowledge({ content });
-      let extracted = result.extractedKnowledge;
-      if (result.apiKeyUsed === 'backup') {
-          extracted += "\n\n*(Powered by backup API key)*";
-      }
+      const extracted = result.extractedKnowledge;
 
       setKnowledge(extracted);
 

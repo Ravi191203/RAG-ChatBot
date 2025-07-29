@@ -9,7 +9,7 @@
  * - ExtractKnowledgeOutput - The return type for the extractKnowledge function.
  */
 
-import {ai, backupAi, googleAI} from '@/ai/genkit';
+import {ai, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ExtractKnowledgeInputSchema = z.object({
@@ -21,7 +21,6 @@ const ExtractKnowledgeOutputSchema = z.object({
   extractedKnowledge: z
     .string()
     .describe('The key information extracted from the content.'),
-  apiKeyUsed: z.enum(['primary', 'backup']).optional().describe('The API key that was used for the response.'),
 });
 export type ExtractKnowledgeOutput = z.infer<
   typeof ExtractKnowledgeOutputSchema
@@ -33,7 +32,7 @@ export async function extractKnowledge(
   return extractKnowledgeFlow(input);
 }
 
-const extractKnowledgePrompt = (client: typeof ai) => client.definePrompt({
+const extractKnowledgePrompt = ai.definePrompt({
         name: 'extractKnowledgePrompt',
         input: { schema: ExtractKnowledgeInputSchema },
         output: { schema: ExtractKnowledgeOutputSchema },
@@ -58,29 +57,15 @@ const extractKnowledgeFlow = ai.defineFlow(
     outputSchema: ExtractKnowledgeOutputSchema,
   },
   async input => {
-
-     try {
-        const primaryPrompt = extractKnowledgePrompt(ai);
-        const { output } = await primaryPrompt(input);
+    try {
+        const { output } = await extractKnowledgePrompt(input);
         if (!output) {
           throw new Error("The AI model failed to respond.");
         }
-        return { ...output, apiKeyUsed: 'primary' };
+        return output;
     } catch (error: any) {
-        console.warn("Primary API key failed for knowledge extraction. Trying backup key.", error.message);
-        if (process.env.GEMINI_BACKUP_API_KEY) {
-            try {
-                const backupPrompt = extractKnowledgePrompt(backupAi);
-                const { output } = await backupPrompt(input);
-                if (!output) {
-                     throw new Error("The AI model and the backup both failed to respond.");
-                }
-                return { ...output, apiKeyUsed: 'backup' };
-            } catch (backupError: any) {
-                 throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
-            }
-        }
-        throw new Error(`The AI model failed to respond. Details: ${error.message}`);
+        console.error("Knowledge extraction failed.", error.message);
+        throw new Error(`Knowledge extraction failed. Details: ${error.message}`);
     }
   }
 );

@@ -9,9 +9,3 @@ export const ai = genkit({
     apiKey: process.env.GEMINI_API_KEY,
   })],
 });
-
-export const backupAi = genkit({
-    plugins: [googleAI({
-        apiKey: process.env.GEMINI_BACKUP_API_KEY,
-    })],
-});

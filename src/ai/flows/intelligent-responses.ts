@@ -9,7 +9,7 @@
  * - IntelligentResponseOutput - The return type for the intelligentResponse function.
  */
 
-import {ai, backupAi, googleAI} from '@/ai/genkit';
+import {ai, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const IntelligentResponseInputSchema = z.object({
@@ -23,7 +23,6 @@ export type IntelligentResponseInput = z.infer<
 
 const IntelligentResponseOutputSchema = z.object({
   answer: z.string().describe('The answer to the question.'),
-  apiKeyUsed: z.enum(['primary', 'backup']).optional().describe('The API key that was used for the response.'),
 });
 export type IntelligentResponseOutput = z.infer<
   typeof IntelligentResponseOutputSchema
@@ -35,7 +34,7 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const intelligentResponsePrompt = (client: typeof ai, modelName: string) => client.definePrompt({
+const intelligentResponsePrompt = (modelName: string) => ai.definePrompt({
       name: 'intelligentResponsePrompt',
       input: {schema: IntelligentResponseInputSchema},
       output: {schema: IntelligentResponseOutputSchema},
@@ -67,26 +66,14 @@ const intelligentResponseFlow = ai.defineFlow(
     const modelName = input.model || 'gemini-1.5-flash-latest';
     
     try {
-        const primaryPrompt = intelligentResponsePrompt(ai, modelName);
-        const { output } = await primaryPrompt(input);
+        const prompt = intelligentResponsePrompt(modelName);
+        const { output } = await prompt(input);
         if (!output) {
           throw new Error(`The selected AI model (${modelName}) failed to respond.`);
         }
-        return { ...output, apiKeyUsed: 'primary' };
+        return output;
     } catch (error: any) {
-        console.warn("Primary API key failed. Trying backup key.", error.message);
-        if (process.env.GEMINI_BACKUP_API_KEY) {
-            try {
-                const backupPrompt = intelligentResponsePrompt(backupAi, modelName);
-                const { output } = await backupPrompt(input);
-                if (!output) {
-                     throw new Error(`The selected AI model (${modelName}) and the backup both failed to respond.`);
-                }
-                return { ...output, apiKeyUsed: 'backup' };
-            } catch (backupError: any) {
-                 throw new Error(`The selected AI model (${modelName}) and the backup both failed to respond. Details: ${backupError.message}`);
-            }
-        }
+        console.error(`Intelligent response failed for model ${modelName}.`, error.message);
         throw new Error(`The selected AI model (${modelName}) failed to respond. Details: ${error.message}`);
     }
   }
