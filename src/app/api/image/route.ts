@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
         const result = await generateImage({ prompt });
         
-        return NextResponse.json({ imageUrl: result.imageUrl, apiKeyUsed: result.apiKeyUsed });
+        return NextResponse.json({ imageUrl: result.imageUrl });
     } catch (error: any) {
         console.error('Error in Image Generation API:', error);
         return NextResponse.json(

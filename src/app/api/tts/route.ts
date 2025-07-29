@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
         const result = await generateSpeech({ text });
         
-        return NextResponse.json({ audio: result.audio, apiKeyUsed: result.apiKeyUsed });
+        return NextResponse.json({ audio: result.audio });
     } catch (error: any) {
         console.error('Error in TTS API:', error);
         return NextResponse.json(

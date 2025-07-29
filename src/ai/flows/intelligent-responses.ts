@@ -24,7 +24,6 @@ export type IntelligentResponseInput = z.infer<
 
 const IntelligentResponseOutputSchema = z.object({
   answer: z.string().describe('The answer to the question.'),
-  apiKeyUsed: z.string().optional().describe('The API key that was used for the response (primary or backup).')
 });
 export type IntelligentResponseOutput = z.infer<
   typeof IntelligentResponseOutputSchema
@@ -36,14 +35,20 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const makeRequest = async (apiKey: string | undefined, input: IntelligentResponseInput) => {
+const intelligentResponseFlow = ai.defineFlow(
+  {
+    name: 'intelligentResponseFlow',
+    inputSchema: IntelligentResponseInputSchema,
+    outputSchema: IntelligentResponseOutputSchema,
+  },
+  async (input) => {
     const modelName = input.model || 'gemini-1.5-flash-latest';
-    const model = googleAI.model(modelName, { apiKey });
+    const model = googleAI.model(modelName);
 
     const intelligentResponsePrompt = ai.definePrompt({
       name: 'intelligentResponsePrompt',
       input: {schema: IntelligentResponseInputSchema},
-      output: {schema: IntelligentResponseOutputSchema.omit({apiKeyUsed: true})},
+      output: {schema: IntelligentResponseOutputSchema},
       prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
@@ -63,49 +68,9 @@ Question:
     });
 
     const { output } = await intelligentResponsePrompt(input);
-    return output;
-}
-
-
-const intelligentResponseFlow = ai.defineFlow(
-  {
-    name: 'intelligentResponseFlow',
-    inputSchema: IntelligentResponseInputSchema,
-    outputSchema: IntelligentResponseOutputSchema,
-  },
-  async (input) => {
-    const modelName = input.model || 'gemini-1.5-flash-latest';
-    
-    try {
-        // Try with the primary API key from the environment
-        const output = await makeRequest(process.env.GEMINI_API_KEY, input);
-        if (output) return { ...output, apiKeyUsed: 'primary' };
-        throw new Error("Primary key returned empty response.");
-
-    } catch (primaryError: any) {
-        console.warn(`Primary API key failed for model ${modelName}. Error: ${primaryError.message}`);
-        
-        // If primary key fails, try the backup key
-        const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
-        if (backupApiKey) {
-            console.log("Attempting to use backup API key...");
-            try {
-                const output = await makeRequest(backupApiKey, input);
-                if (output) return { ...output, apiKeyUsed: 'backup' };
-                throw new Error("Backup key returned empty response.");
-
-            } catch (backupError: any) {
-                console.error(`Backup API key also failed for model ${modelName}. Error: ${backupError.message}`);
-                throw new Error(
-                    `The selected AI model (${modelName}) and the backup both failed to respond. Details: ${backupError.message}`
-                );
-            }
-        } else {
-             // If no backup key, throw the original error
-            throw new Error(
-                `The selected AI model (${modelName}) failed to respond. Details: ${primaryError.message}`
-            );
-        }
+    if (!output) {
+      throw new Error(`The selected AI model (${modelName}) failed to respond.`);
     }
+    return output;
   }
 );

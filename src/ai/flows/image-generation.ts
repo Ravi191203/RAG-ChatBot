@@ -20,27 +20,12 @@ export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
 const GenerateImageOutputSchema = z.object({
   imageUrl: z.string().describe("The generated image as a base64-encoded data URI."),
-  apiKeyUsed: z.string().optional().describe('The API key that was used for the response (primary or backup).')
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   return generateImageFlow(input);
 }
-
-
-const makeRequest = async (apiKey: string | undefined, input: GenerateImageInput) => {
-    const model = googleAI.model('gemini-2.0-flash-preview-image-generation', { apiKey });
-    const { media } = await ai.generate({
-        model,
-        prompt: input.prompt,
-        config: {
-            responseModalities: ['TEXT', 'IMAGE'],
-        },
-    });
-    return media;
-}
-
 
 const generateImageFlow = ai.defineFlow(
   {
@@ -49,28 +34,14 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    let media;
-    let apiKeyUsed = 'primary';
-    try {
-        media = await makeRequest(process.env.GEMINI_API_KEY, input);
-        if (!media?.url) throw new Error("Primary key returned empty response.");
-    } catch (primaryError: any) {
-        console.warn(`Primary API key failed for image generation. Error: ${primaryError.message}`);
-        const backupApiKey = process.env.GEMINI_BACKUP_API_KEY;
-        apiKeyUsed = 'backup';
-        if (backupApiKey) {
-            console.log("Attempting to use backup API key for image generation...");
-            try {
-                media = await makeRequest(backupApiKey, input);
-                if (!media?.url) throw new Error("Backup key returned empty response.");
-            } catch (backupError: any) {
-                console.error(`Backup API key also failed for image generation. Error: ${backupError.message}`);
-                throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
-            }
-        } else {
-             throw new Error(`The AI model failed to respond. Details: ${primaryError.message}`);
-        }
-    }
+    const model = googleAI.model('gemini-2.0-flash-preview-image-generation');
+    const { media } = await ai.generate({
+        model,
+        prompt: input.prompt,
+        config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+        },
+    });
 
     if (!media?.url) {
       throw new Error('Image generation failed to produce an image.');
@@ -78,7 +49,6 @@ const generateImageFlow = ai.defineFlow(
     
     return {
       imageUrl: media.url,
-      apiKeyUsed
     };
   }
 );

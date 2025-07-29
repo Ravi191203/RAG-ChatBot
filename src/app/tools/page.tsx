@@ -31,7 +31,6 @@ type ClassificationResult = {
     classification: string;
     description: string;
     extractedText?: string;
-    apiKeyUsed?: 'primary' | 'backup';
 }
 
 export default function AiToolsPage() {
@@ -42,7 +41,6 @@ export default function AiToolsPage() {
   const [imagePrompt, setImagePrompt] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
-  const [imageApiKeyUsed, setImageApiKeyUsed] = useState('');
 
   // Video Generation State
   const [videoPrompt, setVideoPrompt] = useState('');
@@ -50,7 +48,6 @@ export default function AiToolsPage() {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
   const [videoOperationName, setVideoOperationName] = useState<string | null>(null);
   const [videoStatus, setVideoStatus] = useState('');
-  const [videoApiKeyUsed, setVideoApiKeyUsed] = useState('');
 
 
   // Image Classification State
@@ -67,7 +64,6 @@ export default function AiToolsPage() {
     }
     setIsGeneratingImage(true);
     setGeneratedImageUrl('');
-    setImageApiKeyUsed('');
     try {
       const response = await fetch('/api/image', {
         method: 'POST',
@@ -80,8 +76,7 @@ export default function AiToolsPage() {
       }
       const result = await response.json();
       setGeneratedImageUrl(result.imageUrl);
-      setImageApiKeyUsed(result.apiKeyUsed);
-      toast({ title: 'Success', description: `Image generated successfully${result.apiKeyUsed === 'backup' ? ' (using backup key)' : ''}!` });
+      toast({ title: 'Success', description: `Image generated successfully!` });
     } catch (error: any) {
       console.error(error);
       toast({ title: 'Error', description: `Image generation failed: ${error.message}`, variant: 'destructive' });
@@ -98,7 +93,6 @@ export default function AiToolsPage() {
     setIsGeneratingVideo(true);
     setGeneratedVideoUrl('');
     setVideoOperationName(null);
-    setVideoApiKeyUsed('');
     setVideoStatus('Starting video generation...');
     try {
       const response = await fetch('/api/video', {
@@ -116,8 +110,7 @@ export default function AiToolsPage() {
         throw new Error(result.error);
       }
       setVideoOperationName(result.operationName);
-      setVideoApiKeyUsed(result.apiKeyUsed);
-      toast({ title: 'In Progress', description: `Video generation has started${result.apiKeyUsed === 'backup' ? ' (using backup key)' : ''}. This may take a minute.` });
+      toast({ title: 'In Progress', description: `Video generation has started. This may take a minute.` });
     } catch (error: any) {
       console.error(error);
       toast({ title: 'Error', description: `Video generation failed to start: ${error.message}`, variant: 'destructive' });
@@ -148,9 +141,8 @@ export default function AiToolsPage() {
             setGeneratedVideoUrl(result.videoUrl);
             setIsGeneratingVideo(false);
             setVideoOperationName(null);
-            setVideoApiKeyUsed(result.apiKeyUsed);
             setVideoStatus('Video ready!');
-            toast({ title: 'Success!', description: `Your video has been generated${result.apiKeyUsed === 'backup' ? ' (using backup key)' : ''}.` });
+            toast({ title: 'Success!', description: `Your video has been generated.` });
             clearInterval(interval);
           } else {
              setVideoStatus('Still processing... Please wait.');
@@ -332,7 +324,6 @@ export default function AiToolsPage() {
                                 <div className="flex flex-col items-center gap-4">
                                 <img src={generatedImageUrl} alt="Generated" className="rounded-lg max-w-full max-h-[400px]"/>
                                  <div className="flex items-center gap-4">
-                                    {imageApiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">*(Powered by backup API key)*</p>}
                                     <Button asChild variant="outline">
                                         <a href={generatedImageUrl} download="generated-image.png">
                                             <Download className="mr-2 h-4 w-4" /> Download Image
@@ -368,7 +359,6 @@ export default function AiToolsPage() {
                                     <div className="flex flex-col items-center gap-4">
                                     <video controls src={generatedVideoUrl} className="rounded-lg max-w-full max-h-[400px]" />
                                      <div className="flex items-center gap-4">
-                                         {videoApiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">*(Powered by backup API key)*</p>}
                                         <Button asChild variant="outline">
                                             <a href={generatedVideoUrl} download="generated-video.mp4">
                                                 <Download className="mr-2 h-4 w-4" /> Download Video
@@ -416,7 +406,6 @@ export default function AiToolsPage() {
                                 <Card className="w-full bg-background">
                                     <CardHeader>
                                         <CardTitle className="text-lg">{classificationResult.classification}</CardTitle>
-                                        {classificationResult.apiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground italic">*(Powered by backup API key)*</p>}
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <p className="text-sm text-foreground/80">{classificationResult.description}</p>

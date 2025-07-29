@@ -106,10 +106,7 @@ export default function GlobalAiPage() {
         throw new Error(result.error || 'API request failed');
       }
       
-      let answer = result.answer;
-      if (result.apiKeyUsed === 'backup') {
-          answer += "\n\n*(Powered by backup API key)*";
-      }
+      const answer = result.answer;
 
       setMessages((prevMessages) => [
         ...prevMessages,
