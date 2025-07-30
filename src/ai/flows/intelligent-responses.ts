@@ -81,20 +81,22 @@ const intelligentResponseFlow = ai.defineFlow(
     
     try {
         const prompt = intelligentResponsePrompt(ai, modelName, input);
-        const { output } = await prompt(input);
-        if (!output) {
+        const response = await prompt(input);
+        const answer = response.text();
+        if (!answer) {
           throw new Error(`The selected AI model (${modelName}) failed to respond.`);
         }
-        return { ...output, apiKeyUsed: 'primary' };
+        return { answer, apiKeyUsed: 'primary' };
     } catch (error: any) {
         console.warn(`Primary intelligent response failed for model ${modelName}, trying backup.`, error.message);
         try {
             const prompt = intelligentResponsePrompt(backupAi, modelName, input);
-            const { output } = await prompt(input);
-            if (!output) {
+            const response = await prompt(input);
+            const answer = response.text();
+            if (!answer) {
                 throw new Error(`The selected AI model (${modelName}) and the backup both failed to respond.`);
             }
-            return { ...output, apiKeyUsed: 'backup' };
+            return { answer, apiKeyUsed: 'backup' };
         } catch (backupError: any) {
             console.error(`Backup intelligent response failed for model ${modelName}.`, backupError.message);
             throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
