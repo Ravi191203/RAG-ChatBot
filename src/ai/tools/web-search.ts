@@ -12,7 +12,8 @@ import { z } from 'genkit';
 // In a production app, you would replace the logic in the async function
 // with a call to a real search API (e.g., Google Custom Search, SerpAPI).
 
-export const webSearch = ai.defineTool(
+// We define the tool inside a function so we can attach it to different AI clients (primary and backup)
+export const getWebSearchTool = (client: typeof ai) => client.defineTool(
   {
     name: 'webSearch',
     description: 'Performs a web search to find up-to-date information on a given topic.',
@@ -28,3 +29,6 @@ export const webSearch = ai.defineTool(
     return `Placeholder search results for "${input.query}". In a real application, this would contain a summary of search results from a live web search API. The user is asking about a current event or a topic that may require real-time information.`;
   }
 );
+
+// We export a version of the tool attached to the primary client for direct use if needed.
+export const webSearch = getWebSearchTool(ai);

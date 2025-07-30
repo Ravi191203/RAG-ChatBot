@@ -11,7 +11,7 @@
 
 import {ai, googleAI, backupAi} from '@/ai/genkit';
 import {z} from 'genkit';
-import { webSearch } from '../tools/web-search';
+import { getWebSearchTool } from '../tools/web-search';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
@@ -39,11 +39,18 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const intelligentResponsePrompt = (client: typeof ai, modelName: string, input: IntelligentResponseInput) => client.definePrompt({
+const intelligentResponsePrompt = (client: typeof ai, modelName: string, input: IntelligentResponseInput) => {
+    const tools = [];
+    if (input.webSearch) {
+        // Define the tool for the specific client instance
+        tools.push(getWebSearchTool(client));
+    }
+
+    return client.definePrompt({
       name: 'intelligentResponsePrompt',
       input: {schema: IntelligentResponseInputSchema},
       output: {schema: IntelligentResponseOutputSchema.omit({apiKeyUsed: true})},
-      tools: input.webSearch ? [webSearch] : [],
+      tools: tools,
       system: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
@@ -61,6 +68,7 @@ Question:
 `,
       model: googleAI.model(modelName),
     });
+}
 
 const intelligentResponseFlow = ai.defineFlow(
   {
