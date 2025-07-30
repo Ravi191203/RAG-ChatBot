@@ -12,7 +12,7 @@
 import {ai, backupAi, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getWebSearchTool } from '../tools/web-search';
-import { GenerateRequest } from 'genkit/model';
+import { GenerateRequest, Tool } from 'genkit/model';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
@@ -69,7 +69,13 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
     };
 
     if (input.webSearch) {
-        request.tools = [getWebSearchTool(client, { tavilyApiKey: process.env.TAVILY_API_KEY })];
+        const webSearchTool = getWebSearchTool(client);
+        if (webSearchTool) {
+            request.tools = [webSearchTool as Tool<any, any>];
+            request.toolConfig = {
+                tavilyApiKey: process.env.TAVILY_API_KEY
+            };
+        }
     }
     
     const response = await client.generate(request);

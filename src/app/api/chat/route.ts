@@ -74,8 +74,10 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in chat API:', error);
+    // Return a generic error message in production, but detailed in development
+    const errorMessage = process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred.';
     return NextResponse.json(
-      {error: error.message},
+      {error: errorMessage},
       {status: 500}
     );
   }

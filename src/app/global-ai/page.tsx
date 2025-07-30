@@ -45,10 +45,10 @@ export default function GlobalAiPage() {
 
   useEffect(() => {
     // Session and message loading logic now runs only on the client
-    let currentSessionId = sessionStorage.getItem("chatSessionId");
+    let currentSessionId = sessionStorage.getItem("globalChatSessionId");
     if (!currentSessionId) {
       currentSessionId = generateSessionId();
-      sessionStorage.setItem("chatSessionId", currentSessionId);
+      sessionStorage.setItem("globalChatSessionId", currentSessionId);
     }
     setSessionId(currentSessionId);
     

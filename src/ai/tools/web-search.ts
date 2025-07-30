@@ -15,7 +15,7 @@ const WebSearchConfigSchema = z.object({
 
 // We define the tool inside a function so we can attach it to different AI clients (primary and backup)
 // and pass configuration to it.
-export const getWebSearchTool = (client: typeof ai, config?: z.infer<typeof WebSearchConfigSchema>) => client.defineTool(
+export const getWebSearchTool = (client: typeof ai) => client.defineTool(
   {
     name: 'webSearch',
     description: 'Performs a web search to find up-to-date information on a given topic.',
@@ -23,12 +23,13 @@ export const getWebSearchTool = (client: typeof ai, config?: z.infer<typeof WebS
       query: z.string().describe('The search query.'),
     }),
     outputSchema: z.string().describe('A summary of the search results, including sources.'),
+    configSchema: WebSearchConfigSchema,
   },
-  async (input) => {
-    const apiKey = config?.tavilyApiKey || process.env.TAVILY_API_KEY;
+  async (input, context) => {
+    const apiKey = context?.tavilyApiKey || process.env.TAVILY_API_KEY;
 
     if (!apiKey) {
-      throw new Error("Tavily API key not found. Please set TAVILY_API_KEY in your .env file.");
+      throw new Error("Tavily API key not found. Please set TAVILY_API_KEY in your .env file or pass it in the tool config.");
     }
 
     console.log(`Performing web search for: ${input.query}`);
