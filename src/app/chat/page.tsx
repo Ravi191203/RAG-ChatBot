@@ -118,7 +118,10 @@ export default function ChatPage() {
         throw new Error(result.error || 'API request failed');
       }
       
-      const answer = result.answer;
+      let answer = result.answer;
+      if (result.apiKeyUsed === 'backup') {
+          answer += "\n\n*(Powered by backup API key)*";
+      }
 
       setMessages((prevMessages) => [
         ...prevMessages,

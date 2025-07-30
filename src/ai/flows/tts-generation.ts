@@ -9,7 +9,7 @@
  * - GenerateSpeechOutput - The return type for the generateSpeech function.
  */
 
-import { ai, googleAI } from '@/ai/genkit';
+import { ai, googleAI, backupAi } from '@/ai/genkit';
 import { z } from 'genkit';
 import wav from 'wav';
 
@@ -20,6 +20,7 @@ export type GenerateSpeechInput = z.infer<typeof GenerateSpeechInputSchema>;
 
 const GenerateSpeechOutputSchema = z.object({
   audio: z.string().describe("The generated audio as a base64-encoded WAV data URI."),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional(),
 });
 export type GenerateSpeechOutput = z.infer<typeof GenerateSpeechOutputSchema>;
 
@@ -51,6 +52,34 @@ async function toWav(pcmData: Buffer, channels = 1, rate = 24000, sampleWidth = 
     });
 }
 
+const runTtsGeneration = async (client: typeof ai, text: string) => {
+    const { media } = await client.generate({
+      model: googleAI.model('gemini-2.5-flash-preview-tts'),
+      config: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Algenib' },
+          },
+        },
+      },
+      prompt: text,
+    });
+
+    if (!media) {
+      throw new Error('no media returned');
+    }
+    const audioBuffer = Buffer.from(
+      media.url.substring(media.url.indexOf(',') + 1),
+      'base64'
+    );
+    const wavData = await toWav(audioBuffer);
+
+    return {
+      audio: 'data:audio/wav;base64,' + wavData,
+    };
+};
+
 
 const generateSpeechFlow = ai.defineFlow(
   {
@@ -61,34 +90,17 @@ const generateSpeechFlow = ai.defineFlow(
   async (input) => {
     
     try {
-        const { media } = await ai.generate({
-          model: googleAI.model('gemini-2.5-flash-preview-tts'),
-          config: {
-            responseModalities: ['AUDIO'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: 'Algenib' },
-              },
-            },
-          },
-          prompt: input.text,
-        });
-
-        if (!media) {
-          throw new Error('no media returned');
-        }
-        const audioBuffer = Buffer.from(
-          media.url.substring(media.url.indexOf(',') + 1),
-          'base64'
-        );
-        const wavData = await toWav(audioBuffer);
-
-        return {
-          audio: 'data:audio/wav;base64,' + wavData,
-        };
+        const result = await runTtsGeneration(ai, input.text);
+        return { ...result, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.error("TTS failed.", error.message);
-        throw new Error(`TTS failed. Details: ${error.message}`);
+        console.warn("Primary TTS generation failed, trying backup.", error.message);
+        try {
+            const result = await runTtsGeneration(backupAi, input.text);
+            return { ...result, apiKeyUsed: 'backup' };
+        } catch (backupError: any) {
+            console.error("Backup TTS generation failed.", backupError.message);
+            throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+        }
     }
   }
 );

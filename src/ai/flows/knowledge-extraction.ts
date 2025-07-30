@@ -9,7 +9,7 @@
  * - ExtractKnowledgeOutput - The return type for the extractKnowledge function.
  */
 
-import {ai, googleAI} from '@/ai/genkit';
+import {ai, googleAI, backupAi} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ExtractKnowledgeInputSchema = z.object({
@@ -21,6 +21,7 @@ const ExtractKnowledgeOutputSchema = z.object({
   extractedKnowledge: z
     .string()
     .describe('The key information extracted from the content.'),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional(),
 });
 export type ExtractKnowledgeOutput = z.infer<
   typeof ExtractKnowledgeOutputSchema
@@ -32,10 +33,10 @@ export async function extractKnowledge(
   return extractKnowledgeFlow(input);
 }
 
-const extractKnowledgePrompt = ai.definePrompt({
+const extractKnowledgePrompt = (client: typeof ai) => client.definePrompt({
         name: 'extractKnowledgePrompt',
         input: { schema: ExtractKnowledgeInputSchema },
-        output: { schema: ExtractKnowledgeOutputSchema },
+        output: { schema: ExtractKnowledgeOutputSchema.omit({apiKeyUsed: true}) },
         prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
 
 Instead of just listing key points, I want you to truly understand the text and present your understanding. Your output should be a detailed, well-structured summary that captures the core concepts, key arguments, and any important data or examples. Explain the main ideas in your own words, as if you were creating a study guide for someone who needs to master this information.
@@ -58,14 +59,25 @@ const extractKnowledgeFlow = ai.defineFlow(
   },
   async input => {
     try {
-        const { output } = await extractKnowledgePrompt(input);
+        const prompt = extractKnowledgePrompt(ai);
+        const { output } = await prompt(input);
         if (!output) {
           throw new Error("The AI model failed to respond.");
         }
-        return output;
+        return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.error("Knowledge extraction failed.", error.message);
-        throw new Error(`Knowledge extraction failed. Details: ${error.message}`);
+        console.warn("Primary knowledge extraction failed, trying backup.", error.message);
+        try {
+            const prompt = extractKnowledgePrompt(backupAi);
+            const { output } = await prompt(input);
+            if (!output) {
+                throw new Error("The AI model and the backup both failed to respond.");
+            }
+            return { ...output, apiKeyUsed: 'backup' };
+        } catch (backupError: any) {
+            console.error("Backup knowledge extraction failed.", backupError.message);
+            throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+        }
     }
   }
 );

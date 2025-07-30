@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error('Error in Image Classification API:', error);
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error.message },
+            { error: error.message },
             { status: 500 }
         );
     }

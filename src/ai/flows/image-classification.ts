@@ -9,7 +9,7 @@
  * - ClassifyImageOutput - The return type for the classifyImage function.
  */
 
-import { ai, googleAI } from '@/ai/genkit';
+import { ai, googleAI, backupAi } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const ClassifyImageInputSchema = z.object({
@@ -26,6 +26,7 @@ const ClassifyImageOutputSchema = z.object({
   classification: z.string().describe('The most specific classification for the main subject of the image (e.g., "Golden Retriever", "Eiffel Tower").'),
   description: z.string().describe('A detailed, step-by-step description of the image, covering the subject, setting, colors, and any actions.'),
   extractedText: z.string().optional().describe('Any and all text found within the image. If no text is present, this should be an empty string or omitted.'),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional(),
 });
 export type ClassifyImageOutput = z.infer<typeof ClassifyImageOutputSchema>;
 
@@ -34,10 +35,10 @@ export async function classifyImage(input: ClassifyImageInput): Promise<Classify
   return classifyImageFlow(input);
 }
 
-const classifyImagePrompt = ai.definePrompt({
+const classifyImagePrompt = (client: typeof ai) => client.definePrompt({
       name: 'classifyImagePrompt',
       input: { schema: ClassifyImageInputSchema },
-      output: { schema: ClassifyImageOutputSchema },
+      output: { schema: ClassifyImageOutputSchema.omit({ apiKeyUsed: true }) },
       prompt: `You are an expert image analyst. Analyze the following image in detail. Your task is to provide a comprehensive, step-by-step breakdown of its contents.
 
 1.  **Classification**: Identify the main subject of the image. Be as specific as possible (e.g., "A red 1967 Ford Mustang convertible" instead of just "car").
@@ -47,7 +48,7 @@ const classifyImagePrompt = ai.definePrompt({
 Your response must follow the structured output format.
 
 Image: {{media url=imageDataUri}}`,
-      model: googleAI.model('gemini-pro-vision'),
+      model: googleAI.model('gemini-1.5-flash-latest'),
     });
 
 const classifyImageFlow = ai.defineFlow(
@@ -59,14 +60,25 @@ const classifyImageFlow = ai.defineFlow(
   async (input) => {
     
     try {
-        const { output } = await classifyImagePrompt(input);
+        const prompt = classifyImagePrompt(ai);
+        const { output } = await prompt(input);
         if (!output) {
           throw new Error("The AI model failed to respond.");
         }
-        return output;
+        return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.error("Image classification failed.", error.message);
-        throw new Error(`Image classification failed. Details: ${error.message}`);
+        console.warn("Primary image classification failed, trying backup.", error.message);
+        try {
+            const prompt = classifyImagePrompt(backupAi);
+            const { output } = await prompt(input);
+            if (!output) {
+              throw new Error("The AI model and the backup both failed to respond.");
+            }
+            return { ...output, apiKeyUsed: 'backup' };
+        } catch (backupError: any) {
+             console.error("Backup image classification failed.", backupError.message);
+             throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+        }
     }
   }
 );

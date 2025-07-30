@@ -9,7 +9,7 @@
  * - GenerateVideoOutput - The return type for the generateVideo function.
  */
 
-import { ai, googleAI } from '@/ai/genkit';
+import { ai, googleAI, backupAi } from '@/ai/genkit';
 import { z } from 'genkit';
 import { logger } from 'genkit/logging';
 import { startGenerate } from 'genkit/model';
@@ -27,12 +27,14 @@ const GenerateVideoOutputSchema = z.object({
   done: z.boolean().describe('Whether the operation is complete.'),
   videoUrl: z.string().optional().describe("The generated video as a base64-encoded data URI."),
   error: z.string().optional().describe("Any error message if the operation failed."),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional(),
 });
 export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
 
 
 const CheckVideoStatusInputSchema = z.object({
     operationName: z.string().describe('The name of the long-running operation to check.'),
+    apiKeyUsed: z.enum(['primary', 'backup']).optional(),
 });
 export type CheckVideoStatusInput = z.infer<typeof CheckVideoStatusInputSchema>;
 
@@ -45,6 +47,22 @@ export async function checkVideoStatus(input: CheckVideoStatusInput): Promise<Ge
     return checkVideoStatusFlow(input);
 }
 
+const runStartGenerate = async (client: typeof ai, input: GenerateVideoInput) => {
+    const { operation } = await startGenerate({
+        model: googleAI.model('veo-2.0-generate-001'),
+        prompt: input.prompt,
+        config: {
+            durationSeconds: Math.max(5, Math.min(8, input.duration || 5)),
+            aspectRatio: '16:9',
+        },
+    });
+    
+    if (!operation?.name) {
+        throw new Error("Failed to start video generation operation.");
+    }
+    return { operationName: operation.name, done: false };
+}
+
 const generateVideoFlow = ai.defineFlow(
     {
         name: 'generateVideoFlow',
@@ -53,24 +71,18 @@ const generateVideoFlow = ai.defineFlow(
     },
     async (input) => {
         logger.info("Starting video generation flow for prompt:", input.prompt);
-        
         try {
-            const { operation } = await startGenerate({
-                model: googleAI.model('veo-2.0-generate-001'),
-                prompt: input.prompt,
-                config: {
-                    durationSeconds: Math.max(5, Math.min(8, input.duration || 5)),
-                    aspectRatio: '16:9',
-                },
-            });
-            
-            if (!operation?.name) {
-                throw new Error("Failed to start video generation operation.");
-            }
-            return { operationName: operation.name, done: false };
+            const result = await runStartGenerate(ai, input);
+            return { ...result, apiKeyUsed: 'primary' };
         } catch (error: any) {
-            console.error("Video generation failed to start.", error.message);
-            return { done: true, error: `Video generation failed to start. Details: ${error.message}` };
+            console.warn("Primary video generation failed to start, trying backup.", error.message);
+            try {
+                 const result = await runStartGenerate(backupAi, input);
+                 return { ...result, apiKeyUsed: 'backup' };
+            } catch (backupError: any) {
+                console.error("Backup video generation failed to start.", backupError.message);
+                return { done: true, error: `The AI model and the backup both failed to respond. Details: ${backupError.message}` };
+            }
         }
     }
 );
@@ -84,9 +96,10 @@ const checkVideoStatusFlow = ai.defineFlow(
     },
     async (input) => {
         logger.info("Checking status for operation:", input.operationName);
-        
+        const client = input.apiKeyUsed === 'backup' ? backupAi : ai;
+
         try {
-            let operation = await ai.checkOperation({ name: input.operationName });
+            let operation = await client.checkOperation({ name: input.operationName });
 
             if (!operation) {
                  throw new Error("Operation not found.");
@@ -109,7 +122,8 @@ const checkVideoStatusFlow = ai.defineFlow(
                 logger.info("Video generation complete, URL found.");
                 
                 const fetch = (await import('node-fetch')).default;
-                const videoResponse = await fetch(`${video.media.url}&key=${process.env.GEMINI_API_KEY}`);
+                const apiKey = input.apiKeyUsed === 'backup' ? process.env.GEMINI_BACKUP_API_KEY : process.env.GEMINI_API_KEY;
+                const videoResponse = await fetch(`${video.media.url}&key=${apiKey}`);
                 
                 if (!videoResponse.ok) {
                     throw new Error(`Failed to download video: ${videoResponse.statusText}`);
@@ -129,6 +143,7 @@ const checkVideoStatusFlow = ai.defineFlow(
             return {
                 operationName: operation.name,
                 done: false,
+                apiKeyUsed: input.apiKeyUsed,
             };
         } catch (error: any) {
             logger.error("Error checking video status:", error);

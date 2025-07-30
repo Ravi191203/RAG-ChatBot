@@ -4,11 +4,11 @@ import { generateVideo, checkVideoStatus } from '@/ai/flows/video-generation';
 
 export async function POST(req: NextRequest) {
     try {
-        const { prompt, operationName } = await req.json();
+        const { prompt, operationName, apiKeyUsed } = await req.json();
 
         // If an operation name is provided, check its status
         if (operationName) {
-            const result = await checkVideoStatus({ operationName });
+            const result = await checkVideoStatus({ operationName, apiKeyUsed });
             return NextResponse.json(result);
         }
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error('Error in Video Generation API:', error);
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error.message },
+            { error: error.message },
             { status: 500 }
         );
     }

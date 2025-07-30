@@ -9,7 +9,7 @@
  * - IntelligentResponseOutput - The return type for the intelligentResponse function.
  */
 
-import {ai, googleAI} from '@/ai/genkit';
+import {ai, googleAI, backupAi} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const IntelligentResponseInputSchema = z.object({
@@ -23,6 +23,7 @@ export type IntelligentResponseInput = z.infer<
 
 const IntelligentResponseOutputSchema = z.object({
   answer: z.string().describe('The answer to the question.'),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional(),
 });
 export type IntelligentResponseOutput = z.infer<
   typeof IntelligentResponseOutputSchema
@@ -34,10 +35,10 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const intelligentResponsePrompt = (modelName: string) => ai.definePrompt({
+const intelligentResponsePrompt = (client: typeof ai, modelName: string) => client.definePrompt({
       name: 'intelligentResponsePrompt',
       input: {schema: IntelligentResponseInputSchema},
-      output: {schema: IntelligentResponseOutputSchema},
+      output: {schema: IntelligentResponseOutputSchema.omit({apiKeyUsed: true})},
       prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
@@ -66,15 +67,25 @@ const intelligentResponseFlow = ai.defineFlow(
     const modelName = input.model || 'gemini-1.5-flash-latest';
     
     try {
-        const prompt = intelligentResponsePrompt(modelName);
+        const prompt = intelligentResponsePrompt(ai, modelName);
         const { output } = await prompt(input);
         if (!output) {
           throw new Error(`The selected AI model (${modelName}) failed to respond.`);
         }
-        return output;
+        return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.error(`Intelligent response failed for model ${modelName}.`, error.message);
-        throw new Error(`The selected AI model (${modelName}) failed to respond. Details: ${error.message}`);
+        console.warn(`Primary intelligent response failed for model ${modelName}, trying backup.`, error.message);
+        try {
+            const prompt = intelligentResponsePrompt(backupAi, modelName);
+            const { output } = await prompt(input);
+            if (!output) {
+                throw new Error(`The selected AI model (${modelName}) and the backup both failed to respond.`);
+            }
+            return { ...output, apiKeyUsed: 'backup' };
+        } catch (backupError: any) {
+            console.error(`Backup intelligent response failed for model ${modelName}.`, backupError.message);
+            throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+        }
     }
   }
 );

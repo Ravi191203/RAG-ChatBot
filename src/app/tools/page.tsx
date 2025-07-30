@@ -31,6 +31,12 @@ type ClassificationResult = {
     classification: string;
     description: string;
     extractedText?: string;
+    apiKeyUsed?: 'primary' | 'backup';
+}
+
+type ImageResult = {
+    imageUrl: string;
+    apiKeyUsed?: 'primary' | 'backup';
 }
 
 export default function AiToolsPage() {
@@ -40,13 +46,14 @@ export default function AiToolsPage() {
   // Image Generation State
   const [imagePrompt, setImagePrompt] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  const [generatedImage, setGeneratedImage] = useState<ImageResult | null>(null);
 
   // Video Generation State
   const [videoPrompt, setVideoPrompt] = useState('');
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
   const [videoOperationName, setVideoOperationName] = useState<string | null>(null);
+  const [videoApiKeyUsed, setVideoApiKeyUsed] = useState<'primary' | 'backup' | undefined>();
   const [videoStatus, setVideoStatus] = useState('');
 
 
@@ -63,7 +70,7 @@ export default function AiToolsPage() {
       return;
     }
     setIsGeneratingImage(true);
-    setGeneratedImageUrl('');
+    setGeneratedImage(null);
     try {
       const response = await fetch('/api/image', {
         method: 'POST',
@@ -72,11 +79,15 @@ export default function AiToolsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to generate image');
+        throw new Error(errorData.error || 'Failed to generate image');
       }
       const result = await response.json();
-      setGeneratedImageUrl(result.imageUrl);
-      toast({ title: 'Success', description: `Image generated successfully!` });
+      setGeneratedImage(result);
+      let toastDescription = 'Image generated successfully!';
+      if (result.apiKeyUsed === 'backup') {
+          toastDescription += ' (using backup key)';
+      }
+      toast({ title: 'Success', description: toastDescription });
     } catch (error: any) {
       console.error(error);
       toast({ title: 'Error', description: `Image generation failed: ${error.message}`, variant: 'destructive' });
@@ -93,6 +104,7 @@ export default function AiToolsPage() {
     setIsGeneratingVideo(true);
     setGeneratedVideoUrl('');
     setVideoOperationName(null);
+    setVideoApiKeyUsed(undefined);
     setVideoStatus('Starting video generation...');
     try {
       const response = await fetch('/api/video', {
@@ -103,14 +115,19 @@ export default function AiToolsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to start video generation');
+        throw new Error(errorData.error || 'Failed to start video generation');
       }
       const result = await response.json();
        if (result.error) {
         throw new Error(result.error);
       }
       setVideoOperationName(result.operationName);
-      toast({ title: 'In Progress', description: `Video generation has started. This may take a minute.` });
+      setVideoApiKeyUsed(result.apiKeyUsed);
+      let toastDescription = 'Video generation has started. This may take a minute.';
+      if (result.apiKeyUsed === 'backup') {
+          toastDescription += ' (using backup key)';
+      }
+      toast({ title: 'In Progress', description: toastDescription });
     } catch (error: any) {
       console.error(error);
       toast({ title: 'Error', description: `Video generation failed to start: ${error.message}`, variant: 'destructive' });
@@ -128,7 +145,7 @@ export default function AiToolsPage() {
           const response = await fetch('/api/video', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ operationName: videoOperationName }),
+            body: JSON.stringify({ operationName: videoOperationName, apiKeyUsed: videoApiKeyUsed }),
           });
 
           const result = await response.json();
@@ -137,6 +154,9 @@ export default function AiToolsPage() {
              throw new Error(result.error);
           }
           
+          if (result.apiKeyUsed) {
+            setVideoApiKeyUsed(result.apiKeyUsed);
+          }
 
           if (result.done) {
             setGeneratedVideoUrl(result.videoUrl);
@@ -159,7 +179,7 @@ export default function AiToolsPage() {
 
       return () => clearInterval(interval);
     }
-  }, [videoOperationName, isGeneratingVideo, toast]);
+  }, [videoOperationName, isGeneratingVideo, videoApiKeyUsed, toast]);
 
   const handleClassificationFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,7 +235,7 @@ export default function AiToolsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to classify image');
+        throw new Error(errorData.error || 'Failed to classify image');
       }
 
       const result = await response.json();
@@ -321,19 +341,20 @@ export default function AiToolsPage() {
                     <Card className="mt-4 min-h-[256px] flex items-center justify-center bg-muted/50">
                         <CardContent className="p-4 w-full">
                             {isGeneratingImage && <div className="flex flex-col items-center gap-2 text-muted-foreground"><Loader2 className="h-8 w-8 animate-spin" /><p>Generating your image...</p></div>}
-                            {generatedImageUrl && (
+                            {generatedImage?.imageUrl && (
                                 <div className="flex flex-col items-center gap-4">
-                                <img src={generatedImageUrl} alt="Generated" className="rounded-lg max-w-full max-h-[400px]"/>
+                                <img src={generatedImage.imageUrl} alt="Generated" className="rounded-lg max-w-full max-h-[400px]"/>
                                  <div className="flex flex-col items-center gap-2">
                                     <Button asChild variant="outline">
-                                        <a href={generatedImageUrl} download="generated-image.png">
+                                        <a href={generatedImage.imageUrl} download="generated-image.png">
                                             <Download className="mr-2 h-4 w-4" /> Download Image
                                         </a>
                                     </Button>
+                                    {generatedImage.apiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground">*(Powered by backup API key)*</p>}
                                  </div>
                                 </div>
                             )}
-                            {!isGeneratingImage && !generatedImageUrl && <p className="text-muted-foreground text-center">Your generated image will appear here.</p>}
+                            {!isGeneratingImage && !generatedImage?.imageUrl && <p className="text-muted-foreground text-center">Your generated image will appear here.</p>}
                         </CardContent>
                     </Card>
                   </div>
@@ -407,6 +428,7 @@ export default function AiToolsPage() {
                                 <Card className="w-full bg-background">
                                     <CardHeader>
                                         <CardTitle className="text-lg">{classificationResult.classification}</CardTitle>
+                                         {classificationResult.apiKeyUsed === 'backup' && <p className="text-xs text-muted-foreground">*(Powered by backup API key)*</p>}
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <p className="text-sm text-foreground/80">{classificationResult.description}</p>

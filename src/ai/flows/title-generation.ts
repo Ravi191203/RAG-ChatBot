@@ -9,7 +9,7 @@
  * - GenerateTitleOutput - The return type for the generateTitle function.
  */
 
-import {ai, googleAI} from '@/ai/genkit';
+import {ai, googleAI, backupAi} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateTitleInputSchema = z.object({
@@ -21,6 +21,7 @@ const GenerateTitleOutputSchema = z.object({
   title: z
     .string()
     .describe('A concise, descriptive title for the content (max 5 words).'),
+  apiKeyUsed: z.enum(['primary', 'backup']).optional(),
 });
 export type GenerateTitleOutput = z.infer<typeof GenerateTitleOutputSchema>;
 
@@ -28,10 +29,10 @@ export async function generateTitle(input: GenerateTitleInput): Promise<Generate
   return generateTitleFlow(input);
 }
 
-const generateTitlePrompt = ai.definePrompt({
+const generateTitlePrompt = (client: typeof ai) => client.definePrompt({
       name: 'generateTitlePrompt',
       input: {schema: GenerateTitleInputSchema},
-      output: {schema: GenerateTitleOutputSchema},
+      output: {schema: GenerateTitleOutputSchema.omit({apiKeyUsed: true})},
       prompt: `You are an expert in summarizing content. Your task is to generate a short, descriptive title (maximum 5 words) for the following content. The title should capture the main topic of the text.
 
 Content:
@@ -50,14 +51,25 @@ const generateTitleFlow = ai.defineFlow(
   async input => {
     
     try {
-        const {output} = await generateTitlePrompt(input);
+        const prompt = generateTitlePrompt(ai);
+        const {output} = await prompt(input);
         if (!output) {
             throw new Error("The AI model failed to respond.");
         }
-        return output;
+        return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.error("Title generation failed.", error.message);
-        throw new Error(`Title generation failed. Details: ${error.message}`);
+        console.warn("Primary title generation failed, trying backup.", error.message);
+        try {
+            const prompt = generateTitlePrompt(backupAi);
+            const {output} = await prompt(input);
+            if (!output) {
+                throw new Error("The AI model and the backup both failed to respond.");
+            }
+            return { ...output, apiKeyUsed: 'backup' };
+        } catch (backupError: any) {
+            console.error("Backup title generation failed.", backupError.message);
+            throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
+        }
     }
   }
 );
