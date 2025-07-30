@@ -45,11 +45,13 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
     
     // Dynamically build the system prompt
     const systemPromptParts = [
-        `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.`,
+        `You are a powerful, analytical AI assistant.`,
+        `Your goal is to provide insightful and accurate answers based on the provided context and question.`,
         `- First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.`,
         `- If the context does not contain the answer, use your own extensive general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.`,
         `- Do not mention that you cannot access the internet unless the user explicitly asks about your capabilities. Instead, answer based on the information you were trained on or use the provided tools.`,
-        `- If the question is ambiguous, ask for clarification.`
+        `- If the question is ambiguous, ask for clarification.`,
+        `- Your final output must be ONLY the answer to the user's question. Do not include any preamble, titles, or extra formatting.`
     ];
 
     if (input.canvasMode) {
@@ -58,7 +60,6 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
     if (input.webSearch) {
         systemPromptParts.push(`- Web search is enabled. Use the webSearch tool to find real-time information, recent events, or topics not in your training data.`);
     }
-    systemPromptParts.push(`Your final output should be only the answer to the user's question, without any preamble or extra formatting.`);
     
     const systemPrompt = systemPromptParts.join('\n');
 
@@ -72,16 +73,10 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
         tools: tools,
         system: systemPrompt,
         prompt: `Context:\n${input.context}\n\nQuestion:\n${input.question}`,
-        output: {
-            schema: z.object({
-                answer: z.string()
-            })
-        }
     };
     
     const response = await client.generate(request);
-
-    const answer = response.output()?.answer;
+    const answer = response.text();
     
     if (!answer) {
       throw new Error(`The selected AI model (${modelName}) failed to respond.`);
