@@ -69,7 +69,7 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
     };
 
     if (input.webSearch) {
-        request.tools = [getWebSearchTool(client)];
+        request.tools = [getWebSearchTool(client, { tavilyApiKey: process.env.TAVILY_API_KEY })];
     }
     
     const response = await client.generate(request);
