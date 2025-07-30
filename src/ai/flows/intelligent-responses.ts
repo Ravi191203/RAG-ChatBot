@@ -82,7 +82,7 @@ const intelligentResponseFlow = ai.defineFlow(
     try {
         const prompt = intelligentResponsePrompt(ai, modelName, input);
         const response = await prompt(input);
-        const answer = response.output ?? "No answer generated.";
+        const answer = response.output?.answer ?? "No answer generated.";
 
         if (!answer) {
           throw new Error(`The selected AI model (${modelName}) failed to respond.`);
@@ -93,7 +93,7 @@ const intelligentResponseFlow = ai.defineFlow(
         try {
             const prompt = intelligentResponsePrompt(backupAi, modelName, input);
             const response = await prompt(input);
-            const answer = response.output ?? "No answer generated.";
+            const answer = response.output?.answer ?? "No answer generated.";
             if (!answer) {
                 throw new Error(`The selected AI model (${modelName}) and the backup both failed to respond.`);
             }
