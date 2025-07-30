@@ -43,7 +43,6 @@ export async function intelligentResponse(
 const runIntelligentResponse = async (client: typeof ai, input: IntelligentResponseInput) => {
     const modelName = input.deepSearch ? 'gemini-1.5-pro-latest' : (input.model || 'gemini-1.5-flash-latest');
     
-    // Dynamically build the system prompt
     const systemPromptParts = [
         `You are a powerful, analytical AI assistant.`,
         `Your goal is to provide insightful and accurate answers based on the provided context and question.`,
