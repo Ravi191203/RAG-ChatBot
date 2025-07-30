@@ -12,7 +12,7 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, RefreshCw, Square, Save } from "lucide-react";
+import { Loader2, Send, RefreshCw, Square, Save, Search, Scan, Brush } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { TypingIndicator } from "./typing-indicator";
@@ -26,6 +26,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { ScrollArea } from "./ui/scroll-area";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 
 type Props = {
@@ -34,12 +36,19 @@ type Props = {
   onRegenerate: () => void;
   isResponding: boolean;
   onStopGenerating: () => void;
-  knowledge?: string; // Optional for global chat
   onMessageSaved: () => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
   title: string;
   description: string;
+  knowledge?: string; // Optional for contextual chat
+  isGlobalChat?: boolean; // To show extra options
+  deepSearch?: boolean;
+  onDeepSearchChange?: (value: boolean) => void;
+  webSearch?: boolean;
+  onWebSearchChange?: (value: boolean) => void;
+  canvasMode?: boolean;
+  onCanvasModeChange?: (value: boolean) => void;
 };
 
 export function ChatPanel({
@@ -53,7 +62,14 @@ export function ChatPanel({
   selectedModel,
   onModelChange,
   title,
-  description
+  description,
+  isGlobalChat = false,
+  deepSearch,
+  onDeepSearchChange,
+  webSearch,
+  onWebSearchChange,
+  canvasMode,
+  onCanvasModeChange,
 }: Props) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -186,7 +202,23 @@ export function ChatPanel({
               <div ref={messagesEndRef} />
             </div>
         </CardContent>
-        <CardFooter className="pt-4 border-t bg-background">
+        <CardFooter className="pt-4 border-t bg-background flex flex-col gap-4">
+          {isGlobalChat && (
+            <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 border-b pb-4">
+                <div className="flex items-center space-x-2">
+                    <Switch id="deep-search" checked={deepSearch} onCheckedChange={onDeepSearchChange} disabled={isResponding}/>
+                    <Label htmlFor="deep-search" className="flex items-center gap-1.5"><Scan className="h-4 w-4"/> Deep Search</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Switch id="web-search" checked={webSearch} onCheckedChange={onWebSearchChange} disabled={isResponding}/>
+                    <Label htmlFor="web-search" className="flex items-center gap-1.5"><Search className="h-4 w-4"/> Web Search</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Switch id="canvas-mode" checked={canvasMode} onCheckedChange={onCanvasModeChange} disabled={isResponding}/>
+                    <Label htmlFor="canvas-mode" className="flex items-center gap-1.5"><Brush className="h-4 w-4"/> Canvas Mode</Label>
+                </div>
+            </div>
+          )}
           <div className="flex w-full items-center space-x-2">
               {isResponding ? (
                   <Button

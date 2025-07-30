@@ -12,7 +12,17 @@ export type ChatMessage = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { knowledge, sessionId, history, question, model, userId } = await req.json();
+    const { 
+        knowledge, 
+        sessionId, 
+        history, 
+        question, 
+        model, 
+        userId,
+        deepSearch,
+        webSearch,
+        canvasMode,
+     } = await req.json();
 
     if (!history || !question || !sessionId) {
       return NextResponse.json(
@@ -55,6 +65,9 @@ export async function POST(req: NextRequest) {
       context: context,
       question: question,
       model: model,
+      deepSearch: deepSearch,
+      webSearch: webSearch,
+      canvasMode: canvasMode,
     });
 
     return NextResponse.json(result);

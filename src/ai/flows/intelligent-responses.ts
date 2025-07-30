@@ -11,11 +11,15 @@
 
 import {ai, googleAI, backupAi} from '@/ai/genkit';
 import {z} from 'genkit';
+import { webSearch } from '../tools/web-search';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
   question: z.string().describe('The user question to answer.'),
   model: z.string().optional().describe('The name of the model to use.'),
+  deepSearch: z.boolean().optional().default(false).describe('Whether to use a more powerful model for deeper analysis.'),
+  webSearch: z.boolean().optional().default(false).describe('Whether to allow the AI to search the web.'),
+  canvasMode: z.boolean().optional().default(false).describe('Whether to enable creative/visual canvas mode.'),
 });
 export type IntelligentResponseInput = z.infer<
   typeof IntelligentResponseInputSchema
@@ -35,20 +39,21 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const intelligentResponsePrompt = (client: typeof ai, modelName: string) => client.definePrompt({
+const intelligentResponsePrompt = (client: typeof ai, modelName: string, input: IntelligentResponseInput) => client.definePrompt({
       name: 'intelligentResponsePrompt',
       input: {schema: IntelligentResponseInputSchema},
       output: {schema: IntelligentResponseOutputSchema.omit({apiKeyUsed: true})},
-      prompt: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
+      tools: input.webSearch ? [webSearch] : [],
+      system: `You are a powerful, analytical AI assistant. Your goal is to provide insightful and accurate answers based on the provided context and question.
 
 - First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
 - If the context does not contain the answer, use your own extensive general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
-- Do not mention that you cannot access the internet. Instead, answer based on the information you were trained on.
+- Do not mention that you cannot access the internet unless the user explicitly asks about your capabilities. Instead, answer based on the information you were trained on or use the provided tools.
 - If the question is ambiguous, ask for clarification.
-
-Your final output should be only the answer to the user's question, without any preamble or extra formatting.
-
-Context:
+${input.canvasMode ? "- You are in Canvas Mode. Be more creative, visual, and willing to brainstorm. Think of yourself as a creative partner on a whiteboard." : ""}
+${input.webSearch ? "- Web search is enabled. Use the webSearch tool to find real-time information, recent events, or topics not in your training data." : ""}
+Your final output should be only the answer to the user's question, without any preamble or extra formatting.`,
+      prompt: `Context:
 {{{context}}}
 
 Question:
@@ -64,10 +69,10 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const modelName = input.model || 'gemini-1.5-flash-latest';
+    const modelName = input.deepSearch ? 'gemini-1.5-pro-latest' : (input.model || 'gemini-1.5-flash-latest');
     
     try {
-        const prompt = intelligentResponsePrompt(ai, modelName);
+        const prompt = intelligentResponsePrompt(ai, modelName, input);
         const { output } = await prompt(input);
         if (!output) {
           throw new Error(`The selected AI model (${modelName}) failed to respond.`);
@@ -76,7 +81,7 @@ const intelligentResponseFlow = ai.defineFlow(
     } catch (error: any) {
         console.warn(`Primary intelligent response failed for model ${modelName}, trying backup.`, error.message);
         try {
-            const prompt = intelligentResponsePrompt(backupAi, modelName);
+            const prompt = intelligentResponsePrompt(backupAi, modelName, input);
             const { output } = await prompt(input);
             if (!output) {
                 throw new Error(`The selected AI model (${modelName}) and the backup both failed to respond.`);
