@@ -62,17 +62,15 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
     
     const systemPrompt = systemPromptParts.join('\n');
 
-    const tools = [];
-    if (input.webSearch) {
-        tools.push(getWebSearchTool(client));
-    }
-    
     const request: GenerateRequest = {
         model: googleAI.model(modelName),
-        tools: tools,
         system: systemPrompt,
         prompt: `Context:\n${input.context}\n\nQuestion:\n${input.question}`,
     };
+
+    if (input.webSearch) {
+        request.tools = [getWebSearchTool(client)];
+    }
     
     const response = await client.generate(request);
     const answer = response.text();
