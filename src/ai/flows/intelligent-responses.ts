@@ -10,16 +10,11 @@
 
 import {ai, backupAi, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
-import { webSearch } from '../tools/web-search';
-import { GenerateRequest, Tool } from 'genkit/model';
 
 const IntelligentResponseInputSchema = z.object({
   context: z.string().describe('The knowledge base and chat history.'),
   question: z.string().describe('The user question to answer.'),
   model: z.string().optional().describe('The name of the model to use.'),
-  deepSearch: z.boolean().optional().default(false).describe('Whether to use a more powerful model for deeper analysis.'),
-  webSearch: z.boolean().optional().default(false).describe('Whether to allow the AI to search the web.'),
-  canvasMode: z.boolean().optional().default(false).describe('Whether to enable creative/visual canvas mode.'),
 });
 export type IntelligentResponseInput = z.infer<
   typeof IntelligentResponseInputSchema
@@ -40,39 +35,23 @@ export async function intelligentResponse(
 }
 
 const runIntelligentResponse = async (client: typeof ai, input: IntelligentResponseInput) => {
-    const modelName = input.deepSearch ? 'gemini-1.5-pro-latest' : (input.model || 'gemini-1.5-flash-latest');
+    const modelName = input.model || 'gemini-1.5-flash-latest';
     
-    const systemPromptParts = [
-        `You are a powerful, analytical AI assistant.`,
-        `Your goal is to provide insightful and accurate answers based on the provided context and question.`,
-        `- First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.`,
-        `- If the context does not contain the answer, use your own extensive general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.`,
-        `- Do not mention that you cannot access the internet unless the user explicitly asks about your capabilities. Instead, answer based on the information you were trained on or use the provided tools.`,
-        `- If the question is ambiguous, ask for clarification.`,
-        `- Your final output must be ONLY the answer to the user's question. Do not include any preamble, titles, or extra formatting.`
-    ];
+    const systemPrompt = `You are a powerful, analytical AI assistant.
 
-    if (input.canvasMode) {
-        systemPromptParts.push(`- You are in Canvas Mode. Be more creative, visual, and willing to brainstorm. Think of yourself as a creative partner on a whiteboard.`);
-    }
-    if (input.webSearch) {
-        systemPromptParts.push(`- Web search is enabled. Use the webSearch tool to find real-time information, recent events, or topics not in your training data.`);
-    }
+Your goal is to provide insightful and accurate answers based on the provided context and question.
+
+- First, check if the knowledge base or chat history provides a relevant answer. If it does, use it to form a comprehensive response.
+- If the context does not contain the answer, use your own extensive general knowledge to respond. You can handle a wide range of tasks, from answering questions to generating creative content like code, scripts, or emails.
+- If the question is ambiguous, ask for clarification.
+- Your final output must be ONLY the answer to the user's question. Do not include any preamble, titles, or extra formatting.`;
     
-    const systemPrompt = systemPromptParts.join('\n');
-    
-    const request: GenerateRequest = {
+    const response = await client.generate({
         model: googleAI.model(modelName),
         system: systemPrompt,
         prompt: `Context:\n${input.context}\n\nQuestion:\n${input.question}`,
-        tools: [],
-    };
-
-    if (input.webSearch && process.env.TAVILY_API_KEY) {
-        request.tools = [webSearch as Tool<any, any>];
-    }
+    });
     
-    const response = await client.generate(request);
     const answer = response.text();
     
     if (!answer) {
@@ -89,7 +68,7 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const modelName = input.deepSearch ? 'gemini-1.5-pro-latest' : (input.model || 'gemini-1.5-flash-latest');
+    const modelName = input.model || 'gemini-1.5-flash-latest';
     
     try {
         const result = await runIntelligentResponse(ai, input);

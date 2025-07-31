@@ -35,9 +35,6 @@ export default function GlobalAiPage() {
   const [isResponding, setIsResponding] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("gemini-1.5-flash-latest");
-  const [deepSearch, setDeepSearch] = useState(false);
-  const [webSearch, setWebSearch] = useState(false);
-  const [canvasMode, setCanvasMode] = useState(false);
   const { toast } = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);
   const { user, logout } = useAuth();
@@ -99,9 +96,6 @@ export default function GlobalAiPage() {
           question,
           model: selectedModel,
           userId: user.uid,
-          deepSearch,
-          webSearch,
-          canvasMode,
         }),
         signal: controller.signal,
       });
@@ -251,14 +245,6 @@ export default function GlobalAiPage() {
                   onModelChange={setSelectedModel}
                   title="Global AI Chat"
                   description="Ask me anything! I'm here to help with any topic."
-                  // Global AI specific props
-                  isGlobalChat={true}
-                  deepSearch={deepSearch}
-                  onDeepSearchChange={setDeepSearch}
-                  webSearch={webSearch}
-                  onWebSearchChange={setWebSearch}
-                  canvasMode={canvasMode}
-                  onCanvasModeChange={setCanvasMode}
               />
           </div>
       </main>

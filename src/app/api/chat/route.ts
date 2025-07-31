@@ -19,9 +19,6 @@ export async function POST(req: NextRequest) {
         question, 
         model, 
         userId,
-        deepSearch,
-        webSearch,
-        canvasMode,
      } = await req.json();
 
     if (!history || !question || !sessionId) {
@@ -65,9 +62,6 @@ export async function POST(req: NextRequest) {
       context: context,
       question: question,
       model: model,
-      deepSearch: deepSearch,
-      webSearch: webSearch,
-      canvasMode: canvasMode,
     });
 
     return NextResponse.json(result);
