@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,13 +8,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import Tavily from 'tavily';
 
-const WebSearchConfigSchema = z.object({
-  tavilyApiKey: z.string().optional(),
-});
-
-// We define the tool inside a function so we can attach it to different AI clients (primary and backup)
-// and pass configuration to it.
-export const getWebSearchTool = (client: typeof ai) => client.defineTool(
+export const webSearch = ai.defineTool(
   {
     name: 'webSearch',
     description: 'Performs a web search to find up-to-date information on a given topic.',
@@ -23,13 +16,12 @@ export const getWebSearchTool = (client: typeof ai) => client.defineTool(
       query: z.string().describe('The search query.'),
     }),
     outputSchema: z.string().describe('A summary of the search results, including sources.'),
-    configSchema: WebSearchConfigSchema,
   },
-  async (input, context) => {
-    const apiKey = context?.tavilyApiKey || process.env.TAVILY_API_KEY;
+  async (input) => {
+    const apiKey = process.env.TAVILY_API_KEY;
 
     if (!apiKey) {
-      throw new Error("Tavily API key not found. Please set TAVILY_API_KEY in your .env file or pass it in the tool config.");
+      return "Web search is not available. The TAVILY_API_KEY is not configured.";
     }
 
     console.log(`Performing web search for: ${input.query}`);
@@ -52,6 +44,3 @@ export const getWebSearchTool = (client: typeof ai) => client.defineTool(
     }
   }
 );
-
-// We export a version of the tool attached to the primary client for direct use if needed.
-export const webSearch = getWebSearchTool(ai);

@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -11,7 +10,7 @@
 
 import {ai, backupAi, googleAI} from '@/ai/genkit';
 import {z} from 'genkit';
-import { getWebSearchTool } from '../tools/web-search';
+import { webSearch } from '../tools/web-search';
 import { GenerateRequest, Tool } from 'genkit/model';
 
 const IntelligentResponseInputSchema = z.object({
@@ -57,7 +56,7 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
         systemPromptParts.push(`- You are in Canvas Mode. Be more creative, visual, and willing to brainstorm. Think of yourself as a creative partner on a whiteboard.`);
     }
     if (input.webSearch) {
-        system_prompt_parts.push(`- Web search is enabled. Use the webSearch tool to find real-time information, recent events, or topics not in your training data.`);
+        systemPromptParts.push(`- Web search is enabled. Use the webSearch tool to find real-time information, recent events, or topics not in your training data.`);
     }
     
     const systemPrompt = systemPromptParts.join('\n');
@@ -66,11 +65,11 @@ const runIntelligentResponse = async (client: typeof ai, input: IntelligentRespo
         model: googleAI.model(modelName),
         system: systemPrompt,
         prompt: `Context:\n${input.context}\n\nQuestion:\n${input.question}`,
+        tools: [],
     };
 
     if (input.webSearch && process.env.TAVILY_API_KEY) {
-        const webSearchTool = getWebSearchTool(client, process.env.TAVILY_API_KEY);
-        request.tools = [webSearchTool as Tool<any, any>];
+        request.tools = [webSearch as Tool<any, any>];
     }
     
     const response = await client.generate(request);
