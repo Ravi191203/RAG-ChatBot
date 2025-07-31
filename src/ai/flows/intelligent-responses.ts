@@ -52,7 +52,7 @@ Your goal is to provide insightful and accurate answers based on the provided co
         prompt: `Context:\n${input.context}\n\nQuestion:\n${input.question}`,
     });
     
-    const answer = response.text();
+    const answer = response.text;
     
     if (!answer) {
       throw new Error(`The selected AI model (${modelName}) failed to respond.`);
