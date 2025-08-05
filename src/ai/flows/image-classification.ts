@@ -35,8 +35,8 @@ export async function classifyImage(input: ClassifyImageInput): Promise<Classify
   return classifyImageFlow(input);
 }
 
-const classifyImagePrompt = (client: typeof ai) => client.definePrompt({
-      name: 'classifyImagePrompt',
+const classifyImagePrompt = (client: typeof ai, modelName: string) => client.definePrompt({
+      name: `classifyImagePrompt_${modelName.replace(/-/g, '_')}`,
       input: { schema: ClassifyImageInputSchema },
       output: { schema: ClassifyImageOutputSchema.omit({ apiKeyUsed: true }) },
       prompt: `You are an expert image analyst. Analyze the following image in detail. Your task is to provide a comprehensive, step-by-step breakdown of its contents.
@@ -48,7 +48,7 @@ const classifyImagePrompt = (client: typeof ai) => client.definePrompt({
 Your response must follow the structured output format.
 
 Image: {{media url=imageDataUri}}`,
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: googleAI.model(modelName as any),
     });
 
 const classifyImageFlow = ai.defineFlow(
@@ -60,16 +60,16 @@ const classifyImageFlow = ai.defineFlow(
   async (input) => {
     
     try {
-        const prompt = classifyImagePrompt(ai);
+        const prompt = classifyImagePrompt(ai, 'gemini-1.5-flash-latest');
         const { output } = await prompt(input);
         if (!output) {
           throw new Error("The AI model failed to respond.");
         }
         return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.warn("Primary image classification failed, trying backup.", error.message);
+        console.warn("Primary image classification failed, trying fallback model.", error.message);
         try {
-            const prompt = classifyImagePrompt(backupAi);
+            const prompt = classifyImagePrompt(backupAi, 'gemini-1.5-pro-latest');
             const { output } = await prompt(input);
             if (!output) {
               throw new Error("The AI model and the backup both failed to respond.");

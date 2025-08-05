@@ -33,8 +33,8 @@ export async function extractKnowledge(
   return extractKnowledgeFlow(input);
 }
 
-const extractKnowledgePrompt = (client: typeof ai) => client.definePrompt({
-        name: 'extractKnowledgePrompt',
+const extractKnowledgePrompt = (client: typeof ai, modelName: string) => client.definePrompt({
+        name: `extractKnowledgePrompt_${modelName.replace(/-/g, '_')}`,
         input: { schema: ExtractKnowledgeInputSchema },
         output: { schema: ExtractKnowledgeOutputSchema.omit({apiKeyUsed: true}) },
         prompt: `You are a highly intelligent AI assistant with expertise in deep analysis and knowledge synthesis. Your task is to process the following content and generate a comprehensive and informative knowledge base from it.
@@ -48,7 +48,7 @@ Your final output should be only the extracted knowledge, without any preamble o
 Content:
 {{{content}}}
 `,
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: googleAI.model(modelName as any),
     });
 
 const extractKnowledgeFlow = ai.defineFlow(
@@ -59,16 +59,16 @@ const extractKnowledgeFlow = ai.defineFlow(
   },
   async input => {
     try {
-        const prompt = extractKnowledgePrompt(ai);
+        const prompt = extractKnowledgePrompt(ai, 'gemini-1.5-flash-latest');
         const { output } = await prompt(input);
         if (!output) {
           throw new Error("The AI model failed to respond.");
         }
         return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.warn("Primary knowledge extraction failed, trying backup.", error.message);
+        console.warn("Primary knowledge extraction failed, trying fallback model.", error.message);
         try {
-            const prompt = extractKnowledgePrompt(backupAi);
+            const prompt = extractKnowledgePrompt(backupAi, 'gemini-1.5-pro-latest');
             const { output } = await prompt(input);
             if (!output) {
                 throw new Error("The AI model and the backup both failed to respond.");

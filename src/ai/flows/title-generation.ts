@@ -29,8 +29,8 @@ export async function generateTitle(input: GenerateTitleInput): Promise<Generate
   return generateTitleFlow(input);
 }
 
-const generateTitlePrompt = (client: typeof ai) => client.definePrompt({
-      name: 'generateTitlePrompt',
+const generateTitlePrompt = (client: typeof ai, modelName: string) => client.definePrompt({
+      name: `generateTitlePrompt_${modelName.replace(/-/g, '_')}`,
       input: {schema: GenerateTitleInputSchema},
       output: {schema: GenerateTitleOutputSchema.omit({apiKeyUsed: true})},
       prompt: `You are an expert in summarizing content. Your task is to generate a short, descriptive title (maximum 5 words) for the following content. The title should capture the main topic of the text.
@@ -39,7 +39,7 @@ Content:
 {{{content}}}
 
 Your Title:`,
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: googleAI.model(modelName as any),
     });
 
 const generateTitleFlow = ai.defineFlow(
@@ -51,16 +51,16 @@ const generateTitleFlow = ai.defineFlow(
   async input => {
     
     try {
-        const prompt = generateTitlePrompt(ai);
+        const prompt = generateTitlePrompt(ai, 'gemini-1.5-flash-latest');
         const {output} = await prompt(input);
         if (!output) {
             throw new Error("The AI model failed to respond.");
         }
         return { ...output, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.warn("Primary title generation failed, trying backup.", error.message);
+        console.warn("Primary title generation failed, trying fallback model.", error.message);
         try {
-            const prompt = generateTitlePrompt(backupAi);
+            const prompt = generateTitlePrompt(backupAi, 'gemini-1.5-pro-latest');
             const {output} = await prompt(input);
             if (!output) {
                 throw new Error("The AI model and the backup both failed to respond.");

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -34,8 +35,7 @@ export async function intelligentResponse(
   return intelligentResponseFlow(input);
 }
 
-const runIntelligentResponse = async (client: typeof ai, input: IntelligentResponseInput) => {
-    const modelName = input.model || 'gemini-1.5-flash-latest';
+const runIntelligentResponse = async (client: typeof ai, modelName: string, input: IntelligentResponseInput) => {
     
     const systemPrompt = `You are a powerful, analytical AI assistant.
 
@@ -47,7 +47,7 @@ Your goal is to provide insightful and accurate answers based on the provided co
 - Your final output must be ONLY the answer to the user's question. Do not include any preamble, titles, or extra formatting.`;
     
     const response = await client.generate({
-        model: googleAI.model(modelName),
+        model: googleAI.model(modelName as any),
         system: systemPrompt,
         prompt: `Context:\n${input.context}\n\nQuestion:\n${input.question}`,
     });
@@ -68,18 +68,19 @@ const intelligentResponseFlow = ai.defineFlow(
     outputSchema: IntelligentResponseOutputSchema,
   },
   async (input) => {
-    const modelName = input.model || 'gemini-1.5-flash-latest';
+    const primaryModel = input.model || 'gemini-1.5-flash-latest';
+    const fallbackModel = 'gemini-1.5-pro-latest';
     
     try {
-        const result = await runIntelligentResponse(ai, input);
+        const result = await runIntelligentResponse(ai, primaryModel, input);
         return { ...result, apiKeyUsed: 'primary' };
     } catch (error: any) {
-        console.warn(`Primary intelligent response failed for model ${modelName}, trying backup.`, error.message);
+        console.warn(`Primary intelligent response failed for model ${primaryModel}, trying fallback model ${fallbackModel}.`, error.message);
         try {
-            const result = await runIntelligentResponse(backupAi, input);
+            const result = await runIntelligentResponse(backupAi, fallbackModel, input);
             return { ...result, apiKeyUsed: 'backup' };
         } catch (backupError: any) {
-            console.error(`Backup intelligent response failed for model ${modelName}.`, backupError.message);
+            console.error(`Backup intelligent response failed for model ${fallbackModel}.`, backupError.message);
             throw new Error(`The AI model and the backup both failed to respond. Details: ${backupError.message}`);
         }
     }
