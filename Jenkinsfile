@@ -2,25 +2,45 @@ pipeline {
     agent any
 
     environment {
-        // Use the name you want for your Docker image and container
-        IMAGE_NAME = 'contextual-companion'
-        CONTAINER_NAME = 'contextual-companion-app'
+        // Use the project name for the Docker image and container
+        PROJECT_NAME = 'contextual-companion'
+        // Use the Jenkins BUILD_NUMBER to version the Docker image
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        // The name for the running Docker container
+        CONTAINER_NAME = "${PROJECT_NAME}"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Install Dependencies') {
             steps {
-                // Get the latest code from your repository
-                checkout scm
+                script {
+                    // Use a specific Node.js version in a Docker container for consistency
+                    docker.image('node:18').inside {
+                        // Clean install for a reliable build
+                        sh 'npm ci'
+                    }
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    // Run tests inside the same Node.js container environment
+                    docker.image('node:18').inside {
+                        // Perform static type checking as a basic test
+                        sh 'npm run typecheck'
+                    }
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "Building Docker image: ${env.IMAGE_NAME}"
                     // Build the Docker image using the Dockerfile in the current directory
-                    docker.build(env.IMAGE_NAME, '.')
+                    sh "docker build -t ${PROJECT_NAME}:${IMAGE_TAG} ."
+                    sh "docker tag ${PROJECT_NAME}:${IMAGE_TAG} ${PROJECT_NAME}:latest"
                 }
             }
         }
@@ -28,23 +48,18 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    echo "Deploying container: ${env.CONTAINER_NAME}"
+                    // Stop and remove the old container if it exists to prevent conflicts
+                    sh "docker stop ${CONTAINER_NAME} || true"
+                    sh "docker rm ${CONTAINER_NAME} || true"
                     
-                    // Check if a container with the same name is already running
-                    def existingContainer = sh(script: "docker ps -a -q -f name=${env.CONTAINER_NAME}", returnStatus: true)
-                    
-                    if (existingContainer == 0) {
-                        echo "Stopping and removing existing container: ${env.CONTAINER_NAME}"
-                        // Stop and remove the old container to avoid conflicts
-                        sh "docker rm -f ${env.CONTAINER_NAME}"
-                    } else {
-                        echo "No existing container found. Proceeding to run a new one."
-                    }
-
-                    echo "Starting new container..."
-                    // Run the new Docker container
-                    // It's detached (-d), maps port 3000, and uses the .env file from the workspace
-                    sh "docker run -d --name ${env.CONTAINER_NAME} --env-file .env -p 3000:3000 ${env.IMAGE_NAME}"
+                    // Run the new container, passing the .env file for environment variables
+                    // and mapping port 3000 to the host.
+                    sh """
+                    docker run -d --name ${CONTAINER_NAME} \\
+                               --env-file .env \\
+                               -p 3000:3000 \\
+                               ${PROJECT_NAME}:latest
+                    """
                 }
             }
         }
@@ -52,8 +67,7 @@ pipeline {
 
     post {
         always {
-            // Clean up old, unused Docker images to save space
-            echo 'Cleaning up old Docker images...'
+            // Clean up old, untagged Docker images to save disk space
             sh 'docker image prune -f'
         }
     }
