@@ -1,58 +1,54 @@
-
 pipeline {
-    agent any
-
-    environment {
-        // Use a unique name for the Docker image and container
-        DOCKER_IMAGE_NAME = "contextual-companion"
-        DOCKER_CONTAINER_NAME = "contextual-companion-app"
+    // This agent directive tells Jenkins to build the Dockerfile from the current directory
+    // and run all subsequent steps inside a container based on that image.
+    // This is the standard and most reliable way to build Docker-based projects.
+    agent {
+        dockerfile true
     }
 
     stages {
+        // Stage 1: Install Dependencies
+        // This command runs inside the container defined by your Dockerfile.
         stage('Install Dependencies') {
             steps {
-                script {
-                    // Run npm install inside a temporary node container
-                    sh "docker run --rm -v \${env.WORKSPACE}:/app -w /app node:20 npm install"
-                }
+                sh 'npm install'
             }
         }
 
+        // Stage 2: Run Tests
+        // This runs the typecheck script defined in your package.json.
         stage('Run Tests') {
             steps {
-                script {
-                    // Run typecheck inside a temporary node container
-                     sh "docker run --rm -v \${env.WORKSPACE}:/app -w /app node:20 npm run typecheck"
-                }
+                sh 'npm run typecheck'
             }
         }
 
-        stage('Build Docker Image') {
+        // Stage 3: Build and Deploy
+        // Since the previous stages already confirm the app builds and passes tests,
+        // we can now build the production image and deploy it.
+        stage('Build and Deploy') {
             steps {
                 script {
-                    // Build the Docker image and tag it with the build number
-                    sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    // Stop and remove the old container if it exists
-                    sh "docker stop ${DOCKER_CONTAINER_NAME} || true"
-                    sh "docker rm ${DOCKER_CONTAINER_NAME} || true"
+                    // Use the Jenkins BUILD_NUMBER for a unique tag
+                    def dockerImage = "contextual-companion:${env.BUILD_NUMBER}"
                     
-                    // Run the new container from the newly built image
-                    sh "docker run -d --name ${DOCKER_CONTAINER_NAME} --env-file .env -p 3000:3000 ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                    // Build the final production image
+                    sh "docker build -t ${dockerImage} ."
+                    
+                    // Stop and remove the existing container if it's running, ignoring errors if it doesn't exist
+                    sh 'docker stop contextual-companion || true'
+                    sh 'docker rm contextual-companion || true'
+                    
+                    // Run the new container
+                    sh "docker run -d --name contextual-companion -p 3000:3000 --env-file ./.env ${dockerImage}"
                 }
             }
         }
     }
-
+    
     post {
         always {
-            // Clean up old Docker images to save space
+            // Clean up dangling Docker images to save space on the Jenkins server
             sh 'docker image prune -f'
         }
     }
