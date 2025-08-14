@@ -107,32 +107,32 @@ The prompts are designed to be robust, with retry logic and fallback models to e
 
 ## ⚙️ CI/CD with Jenkins
 
-This project includes a `Jenkinsfile` for setting up a simple CI/CD pipeline to automatically build and deploy the application.
+This project includes a `Jenkinsfile` for setting up a CI/CD pipeline to automatically build, test, and deploy the application.
 
 ### Pipeline Overview
 
-The pipeline has three stages:
+The pipeline has four stages:
 
-1.  **Checkout**: Pulls the latest code from your source control repository.
-2.  **Build**: Builds a new Docker image for the application using the provided `Dockerfile`.
-3.  **Deploy**: Stops and removes the existing Docker container (if it exists) and then starts a new container with the newly built image.
+1.  **Install Dependencies**: Runs `npm install` inside a Node.js Docker container to fetch all the necessary dependencies for your project.
+2.  **Run Tests**: Executes `npm run typecheck` to perform static type checking on the TypeScript code, ensuring code quality.
+3.  **Build Docker Image**: Builds a new Docker image for the application using the provided `Dockerfile` and tags it with the Jenkins build number.
+4.  **Deploy**: Stops and removes the existing Docker container (if it exists) and then starts a new container with the newly built image, making the latest version of your app live.
 
 ### Jenkins Setup
 
 1.  **Create a new Jenkins Job**:
-    - In your Jenkins dashboard, click "New Item".
-    - Enter a name for your pipeline (e.g., `contextual-companion-pipeline`) and select "Pipeline".
-    - Click "OK".
+    - In your Jenkins dashboard, click **"New Item"**.
+    - Enter a name for your pipeline (e.g., `contextual-companion-pipeline`) and select **"Pipeline"**.
+    - Click **"OK"**.
 
 2.  **Configure the Pipeline**:
     - In the "General" section, you can add a description.
-    - In the "Pipeline" section, select "Pipeline script from SCM" from the "Definition" dropdown.
-    - **SCM**: Choose your version control system (e.g., "Git").
+    - In the **"Pipeline"** section, select **"Pipeline script from SCM"** from the "Definition" dropdown.
+    - **SCM**: Choose your version control system (e.g., **"Git"**).
     - **Repository URL**: Enter the URL of your repository (e.g., `https://github.com/your-username/contextual-companion.git`).
     - **Branch**: Specify the branch to build from (e.g., `*/main`).
     - **Script Path**: Ensure this is set to `Jenkinsfile`, which is the default.
 
 3.  **Save and Run**:
-    - Click "Save" to create the pipeline.
-    - Click "Build Now" to trigger the first build. Jenkins will now follow the steps defined in your `Jenkinsfile` to deploy the application.
-```
+    - Click **"Save"** to create the pipeline.
+    - Click **"Build Now"** to trigger the first build. Jenkins will now follow the steps defined in your `Jenkinsfile` to deploy the application.
